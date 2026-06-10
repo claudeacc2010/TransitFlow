@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
@@ -20,6 +21,16 @@ class LoginRequest(BaseModel):
     # намеренно не являются валидными RFC-email, поэтому str, а не EmailStr.
     email: str
     password: str
+
+
+class RegisterRequest(BaseModel):
+    # Саморегистрация только для shipper/carrier; analyst — внутренняя роль
+    # акимата, выдаётся через сид, не через открытую форму.
+    email: str = Field(min_length=3, max_length=255)
+    password: str = Field(min_length=6, max_length=72)  # bcrypt лимит — 72 байта
+    name: str = Field(min_length=1, max_length=255)
+    role: Literal[UserRole.shipper, UserRole.carrier]
+    company: str | None = Field(default=None, max_length=255)
 
 
 class UserOut(BaseModel):

@@ -421,6 +421,29 @@ button:disabled {
   margin: 8px 0 0;
 }
 
+/* --- Регистрация --- */
+.role-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.role-toggle button {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.role-toggle button.active {
+  background: #f5a6231a;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.auth-switch {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 18px 0 0;
+}
+
 /* --- QR-пропуск в кабинете перевозчика --- */
 .qr-box {
   display: flex;

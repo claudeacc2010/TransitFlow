@@ -5,6 +5,7 @@ import { useAuth } from "./auth";
 import Analyst from "./pages/Analyst";
 import Carrier from "./pages/Carrier";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Shipper from "./pages/Shipper";
 
 const HOME_BY_ROLE = {
@@ -32,6 +33,10 @@ export default function App() {
       <Route
         path="/login"
         element={user ? <Navigate to={HOME_BY_ROLE[user.role]} replace /> : <Login />}
+      />
+      <Route
+        path="/register"
+        element={user ? <Navigate to={HOME_BY_ROLE[user.role]} replace /> : <Register />}
       />
       <Route
         path="/shipper"

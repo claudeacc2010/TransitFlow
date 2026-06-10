@@ -1,5 +1,6 @@
 // Логин: форма + кнопки быстрого входа демо-аккаунтов (раздел 4).
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { useAuth } from "../auth";
 
@@ -75,6 +76,10 @@ export default function Login() {
         </div>
 
         {error && <div className="error">{error}</div>}
+
+        <p className="auth-switch">
+          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+        </p>
       </div>
     </div>
   );

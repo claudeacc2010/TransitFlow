@@ -32,13 +32,26 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  // Регистрация отправителя/перевозчика: бэкенд сразу возвращает токен,
+  // поэтому после неё пользователь уже залогинен.
+  async function register(payload) {
+    const data = await api("/auth/register", {
+      method: "POST",
+      body: payload,
+      auth: false,
+    });
+    setToken(data.access_token);
+    setUser(data.user);
+    return data.user;
+  }
+
   function logout() {
     clearToken();
     setUser(null);
   }
 
   return (
-    <AuthCtx.Provider value={{ user, loading, login, logout }}>
+    <AuthCtx.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthCtx.Provider>
   );
