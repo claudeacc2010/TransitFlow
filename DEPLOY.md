@@ -188,7 +188,7 @@ Settings → Developer settings → Tokens).
 3. **ANTHROPIC_API_KEY** — *опционально*. На Этапе 0 не нужен (AI-сводки ещё
    нет). Можно не добавлять или оставить пустым.
 
-> `PORT` Railway задаёт автоматически — отдельно прописывать не надо.
+> `PORT` Railway задаёт автоматически — отдельно прописывать не надо.      
 
 ### C.5. Открыть приложение наружу (домен)
 Сервис **app** → **Settings** → раздел **Networking** → **Generate Domain**.
@@ -254,3 +254,6 @@ Settings → Developer settings → Tokens).
 - [ ] app → Settings → Networking → Generate Domain
 - [ ] Проверить `/api/health` и `/docs` на домене
 - [ ] Сохранить публичный URL для сдачи
+
+Swagger для ручной проверки на питче:
+https://transitflow-production-3603.up.railway.app/docs

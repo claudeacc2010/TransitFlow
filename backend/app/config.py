@@ -18,8 +18,13 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 720
 
-    # Опционально: без ключа AI-сводка падает в fallback (раздел 4).
+    # --- AI-сводка (раздел 4) ---
+    # Провайдер: "gemini" | "claude". Без рабочего ключа сводка падает в fallback.
+    ai_provider: str = "gemini"
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
     anthropic_api_key: str | None = None
+    anthropic_model: str = "claude-haiku-4-5-20251001"
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
