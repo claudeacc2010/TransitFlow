@@ -322,6 +322,105 @@ button:disabled {
   background: var(--border);
 }
 
+/* --- Дашборд аналитика (Этап 2) --- */
+.container {
+  /* дашборду тесно в 1100px; кабинетам shipper/carrier ширина не мешает */
+  max-width: 1280px;
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.stat {
+  padding: 16px 20px;
+}
+.stat-value {
+  display: block;
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.stat-value small {
+  font-size: 15px;
+  color: var(--muted);
+}
+.stat-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+.grid-map {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 20px;
+}
+.stats-row + .grid-map,
+.grid-map + .panel,
+.grid-3 + .panel,
+.panel + .grid-3 {
+  margin-top: 20px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 20px;
+}
+@media (max-width: 980px) {
+  .stats-row,
+  .grid-map,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+.map {
+  height: 320px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.leaflet-container {
+  font-family: var(--sans);
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.select-inline {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.ai-text {
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+.forecast-note {
+  color: var(--faint);
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
 /* --- QR-пропуск в кабинете перевозчика --- */
 .qr-box {
   display: flex;
