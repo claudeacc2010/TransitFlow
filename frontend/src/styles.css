@@ -1,0 +1,342 @@
+/* Палитра «диспетчерская транзита» (раздел 8 спеки). Интерфейс на русском. */
+:root {
+  --bg: #14181f;
+  --panel: #1c222b;
+  --panel-2: #232a35;
+  --border: #2a323f;
+  --text: #e8ecf1;
+  --muted: #8a94a6;
+  --faint: #5d6675;
+  --accent: #f5a623; /* янтарный — сигнальные огни/краны */
+  --load-low: #3fb68b;
+  --load-mid: #f5a623;
+  --load-high: #e2574c;
+  --mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--mono);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 0 0 12px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+/* --- Шапка --- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.brand {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--accent);
+}
+.brand small {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+}
+.header-user .who {
+  text-align: right;
+}
+.header-user .who b {
+  display: block;
+}
+.header-user .who span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* --- Раскладка --- */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 820px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Панели/карточки --- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.panel + .panel {
+  margin-top: 20px;
+}
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* --- Формы --- */
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 12px 0 6px;
+}
+input,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+button {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+button:hover {
+  filter: brightness(1.08);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #1a1206;
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.btn-block {
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* --- Список заявок/слотов --- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.item {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.item-route {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.item-meta {
+  color: var(--muted);
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.item-meta b {
+  color: var(--text);
+  font-family: var(--mono);
+}
+
+/* --- Бейджи статусов --- */
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-open {
+  color: var(--accent);
+  background: #f5a6231a;
+  border: 1px solid #f5a62355;
+}
+.badge-accepted {
+  color: #6aa6ff;
+  background: #6aa6ff1a;
+  border: 1px solid #6aa6ff55;
+}
+.badge-slot_booked {
+  color: var(--load-low);
+  background: #3fb68b1a;
+  border: 1px solid #3fb68b55;
+}
+.badge-done {
+  color: var(--muted);
+  background: #8a94a61a;
+  border: 1px solid #8a94a655;
+}
+.badge-cancelled {
+  color: var(--load-high);
+  background: #e2574c1a;
+  border: 1px solid #e2574c55;
+}
+
+/* --- Загрузка слота (низкая/средняя/высокая) --- */
+.load-low {
+  color: var(--load-low);
+}
+.load-mid {
+  color: var(--load-mid);
+}
+.load-high {
+  color: var(--load-high);
+}
+
+/* --- Сообщения --- */
+.error {
+  color: var(--load-high);
+  background: #e2574c12;
+  border: 1px solid #e2574c40;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-top: 12px;
+}
+.empty {
+  color: var(--faint);
+  text-align: center;
+  padding: 32px 0;
+  font-size: 14px;
+}
+.units {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* --- Логин --- */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.login-card {
+  width: 100%;
+  max-width: 380px;
+}
+.quick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--faint);
+  font-size: 12px;
+  margin: 18px 0;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* --- QR-пропуск в кабинете перевозчика --- */
+.qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  background: #fff;
+  border-radius: 10px;
+}
+.qr-caption {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  word-break: break-all;
+  font-family: var(--mono);
+}
