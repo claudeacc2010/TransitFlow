@@ -5,6 +5,7 @@ import Layout from "../components/Layout";
 import AiSummary from "../components/analyst/AiSummary";
 import Breakdowns from "../components/analyst/Breakdowns";
 import CheckpointMap from "../components/analyst/CheckpointMap";
+import EventFeed from "../components/analyst/EventFeed";
 import Forecast from "../components/analyst/Forecast";
 import TrafficChart from "../components/analyst/TrafficChart";
 import { api } from "../api";
@@ -69,7 +70,10 @@ export default function Analyst() {
             <span><i style={{ background: "#e2574c" }} /> от 85%</span>
           </div>
         </div>
-        <AiSummary />
+        <div className="rail">
+          <AiSummary />
+          <EventFeed />
+        </div>
       </div>
 
       <TrafficChart checkpoints={checkpoints} />

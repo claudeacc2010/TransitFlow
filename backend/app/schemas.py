@@ -121,6 +121,15 @@ class AISummaryOut(BaseModel):
     generated_at: datetime
 
 
+class EventOut(BaseModel):
+    """Событие ленты дашборда: kind — для цвета (request|accept|booking)."""
+
+    kind: str
+    ts: datetime
+    title: str
+    detail: str
+
+
 # ---------------------------------------------------------------------------
 # Слоты
 # ---------------------------------------------------------------------------

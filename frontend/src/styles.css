@@ -421,6 +421,82 @@ button:disabled {
   margin: 8px 0 0;
 }
 
+/* --- Лента событий --- */
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.live-dot {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--load-low);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.live-dot::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--load-low);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.feed-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--panel-2);
+}
+.feed-item:last-child {
+  border-bottom: none;
+}
+.feed-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 5px;
+  background: var(--muted);
+}
+.feed-dot.ev-request { background: var(--accent); }
+.feed-dot.ev-accept { background: #6aa6ff; }
+.feed-dot.ev-booking { background: var(--load-low); }
+.feed-body {
+  flex: 1;
+  min-width: 0;
+}
+.feed-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+.feed-time {
+  flex: none;
+  color: var(--faint);
+  font-size: 12px;
+  font-family: var(--mono);
+}
+.feed-detail {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* --- Регистрация --- */
 .role-toggle {
   display: grid;

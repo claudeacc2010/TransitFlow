@@ -11,6 +11,7 @@ from app.routers import analytics as analytics_router
 from app.routers import auth as auth_router
 from app.routers import bookings as bookings_router
 from app.routers import checkpoints as checkpoints_router
+from app.routers import events as events_router
 from app.routers import passes as passes_router
 from app.routers import requests as requests_router
 from app.routers import slots as slots_router
@@ -47,6 +48,7 @@ app.include_router(slots_router.router)
 app.include_router(bookings_router.router)
 app.include_router(passes_router.router)
 app.include_router(analytics_router.router)
+app.include_router(events_router.router)
 
 
 @app.get("/api/health", tags=["meta"])
