@@ -1,7 +1,6 @@
-"""Справочник узлов и доступные слоты (раздел 7).
+"""Доступные слоты (раздел 7). Узлы (+загрузка) — routers/checkpoints.py.
 
-Прогноз и текущая загрузка (аналитика) — Этап 2; здесь только то, что нужно
-перевозчику, чтобы выбрать узел и забронировать свободный слот.
+Здесь только то, что нужно перевозчику, чтобы забронировать свободный слот.
 """
 from __future__ import annotations
 
@@ -13,18 +12,10 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.db import get_db
-from app.models import Checkpoint, Slot, User
-from app.schemas import CheckpointOut, SlotOut
+from app.models import Slot, User
+from app.schemas import SlotOut
 
 router = APIRouter(prefix="/api", tags=["catalog"])
-
-
-@router.get("/checkpoints", response_model=list[CheckpointOut])
-def list_checkpoints(
-    db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
-) -> list[Checkpoint]:
-    return list(db.scalars(select(Checkpoint).order_by(Checkpoint.name)))
 
 
 @router.get("/slots", response_model=list[SlotOut])

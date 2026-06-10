@@ -24,4 +24,6 @@ if __name__ == "__main__":
     print(f"GEMINI_MODEL = {settings.gemini_model}")
     print(f"ключ задан: {bool(settings.gemini_api_key)}")
     print("-" * 60)
-    print(generate_summary(DEMO_STATS))
+    text, source = generate_summary(DEMO_STATS)
+    print(f"[источник: {source}]")
+    print(text)

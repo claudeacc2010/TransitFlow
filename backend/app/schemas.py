@@ -63,6 +63,53 @@ class CheckpointOut(BaseModel):
     capacity_per_hour: int
 
 
+class CheckpointLoadOut(CheckpointOut):
+    """Узел + текущая загрузка (последний час истории) — питание карты."""
+
+    trucks_last_hour: int
+    load_pct: float  # trucks_last_hour / capacity_per_hour * 100
+
+
+class ForecastPoint(BaseModel):
+    ts: datetime
+    trucks_expected: float
+
+
+class ForecastOut(BaseModel):
+    checkpoint_id: int
+    days: int
+    points: list[ForecastPoint]
+
+
+# ---------------------------------------------------------------------------
+# Аналитика (Этап 2)
+# ---------------------------------------------------------------------------
+class AnalyticsOverview(BaseModel):
+    """Карточки дашборда (раздел 7)."""
+
+    trucks_today: int
+    tons_per_day: float  # средняя тоннажность заявок за 7 дней
+    active_requests: int
+    avg_load_pct: float  # средняя текущая загрузка узлов
+
+
+class TimeseriesPoint(BaseModel):
+    date: date
+    trucks: int
+
+
+class BreakdownItem(BaseModel):
+    key: str
+    label: str
+    trucks: int
+
+
+class AISummaryOut(BaseModel):
+    summary: str
+    provider: str
+    generated_at: datetime
+
+
 # ---------------------------------------------------------------------------
 # Слоты
 # ---------------------------------------------------------------------------

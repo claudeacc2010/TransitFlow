@@ -104,14 +104,26 @@ def _fallback(stats: dict) -> str:
     )
 
 
-def generate_summary(stats: dict) -> str:
-    """Главная точка входа: вернуть текст сводки. Никогда не бросает наружу."""
+# Кешированный fallback (раздел 9, шаг 12): последняя удачная сводка живёт в
+# памяти процесса — если API упал во время демо, показываем её, а не сырые цифры.
+_last_good: str | None = None
+
+
+def generate_summary(stats: dict) -> tuple[str, str]:
+    """Главная точка входа: (текст, источник). Никогда не бросает наружу.
+
+    Источник: "gemini" | "claude" | "cache" | "fallback" — фронт может пометить
+    сводку бейджем, а смоук проверить, что реально сходили в API.
+    """
+    global _last_good
     prompt = _build_prompt(stats)
     provider = (settings.ai_provider or "gemini").lower()
     try:
-        if provider == "claude":
-            return _claude(prompt)
-        return _gemini(prompt)
+        text = _claude(prompt) if provider == "claude" else _gemini(prompt)
+        _last_good = text
+        return text, provider
     except Exception as exc:  # noqa: BLE001 — любой сбой => fallback, дашборд жив
         print(f"[ai_summary] провайдер={provider} упал, fallback: {exc}", file=sys.stderr)
-        return _fallback(stats)
+        if _last_good is not None:
+            return _last_good, "cache"
+        return _fallback(stats), "fallback"
