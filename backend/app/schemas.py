@@ -227,7 +227,7 @@ class RequestCreate(BaseModel):
     ready_at: datetime | None = None
     urgency: Urgency = Urgency.normal
     # §2: цена отправителя за перевозку, тг (опционально — можно создать без цены).
-    price_offer: float | None = Field(default=None, gt=0)
+    price_offer: float | None = None
 
     @field_validator("adr_class")
     @classmethod

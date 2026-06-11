@@ -122,9 +122,6 @@ export default function Shipper() {
     }
   }
 
-  // Предупреждение, если своя цена занижена относительно рекомендованной >20%.
-  const priceLow =
-    rec && form.price_offer !== "" && Number(form.price_offer) < rec.recommended * 0.8;
 
   async function submit(e) {
     e.preventDefault();
@@ -301,17 +298,11 @@ export default function Shipper() {
               <label>Ваша цена за перевозку, ₸</label>
               <input
                 type="number"
-                min="1"
                 step="1000"
                 value={form.price_offer}
                 onChange={(e) => set("price_offer", e.target.value)}
                 placeholder={rec ? String(rec.recommended) : "напр. 380000"}
               />
-              {priceLow && (
-                <div className="warn">
-                  Цена ниже рекомендованной на 20%+ — перевозчики могут не взять заказ.
-                </div>
-              )}
             </div>
 
             <button className="btn-primary btn-block" disabled={busy} type="submit">
