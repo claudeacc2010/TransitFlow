@@ -48,6 +48,11 @@ cps = r.json()
 check(len(cps) >= 3, f"узлов: {len(cps)}")
 check(all("trucks_last_hour" in cp and "load_pct" in cp for cp in cps), "у всех узлов есть загрузка")
 check(any(cp["trucks_last_hour"] > 0 for cp in cps), "хотя бы на одном узле трафик > 0")
+# §5: очереди
+check(all({"waiting_now", "est_wait_hours", "capacity_per_day"} <= cp.keys() for cp in cps),
+      "у всех узлов есть оценка очереди (waiting_now/est_wait_hours/capacity_per_day)")
+check(any(cp["est_wait_hours"] > 0 for cp in cps), "хотя бы на одном узле есть очередь")
+check(any(cp["est_wait_hours"] == 0 for cp in cps), "хотя бы один узел свободен (контраст)")
 
 print("3) Прогноз по самому загруженному узлу")
 busiest = max(cps, key=lambda cp: cp["load_pct"])

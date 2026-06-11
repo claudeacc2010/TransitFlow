@@ -209,7 +209,7 @@ function BookingForm({ assignmentId, checkpoints, onBooked }) {
           <option value="">Выберите узел…</option>
           {checkpoints.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {c.name} — {c.est_wait_hours > 0 ? `очередь ≈ ${c.est_wait_hours} ч` : "без очереди"}
             </option>
           ))}
         </select>

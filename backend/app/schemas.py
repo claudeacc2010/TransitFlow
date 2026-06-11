@@ -87,6 +87,10 @@ class CheckpointLoadOut(CheckpointOut):
 
     trucks_last_hour: int
     load_pct: float  # trucks_last_hour / capacity_per_hour * 100
+    # §5: оценка очереди на узле.
+    capacity_per_day: int       # capacity_per_hour * 24
+    waiting_now: int            # машин в очереди сейчас (симуляция за 24 ч)
+    est_wait_hours: float       # ожидаемое время ожидания, ч
 
 
 class ForecastPoint(BaseModel):

@@ -11,10 +11,11 @@ const KIND_RU = {
   road_hub: "Автоузел",
 };
 
-// Цвета совпадают с CSS-переменными --load-* (низкая/средняя/высокая).
-function loadColor(pct) {
-  if (pct >= 85) return "#e2574c";
-  if (pct >= 50) return "#f5a623";
+// §5: цвет узла по ожиданию в очереди (затор — главная боль кейса).
+// >=8 ч — критично (красный), >=3 ч — напряжённо (оранжевый), иначе свободно.
+function waitColor(hours) {
+  if (hours >= 8) return "#e2574c";
+  if (hours >= 3) return "#f5a623";
   return "#3fb68b";
 }
 
@@ -36,8 +37,8 @@ export default function CheckpointMap({ checkpoints }) {
           center={[cp.lat, cp.lng]}
           radius={10 + Math.min(10, cp.capacity_per_hour / 10)}
           pathOptions={{
-            color: loadColor(cp.load_pct),
-            fillColor: loadColor(cp.load_pct),
+            color: waitColor(cp.est_wait_hours),
+            fillColor: waitColor(cp.est_wait_hours),
             fillOpacity: 0.45,
             weight: 2,
           }}
@@ -47,9 +48,11 @@ export default function CheckpointMap({ checkpoints }) {
             <br />
             {KIND_RU[cp.kind] || cp.kind}
             <br />
-            Сейчас: {cp.trucks_last_hour} маш/ч из {cp.capacity_per_hour}
+            Пропускная способность: {cp.capacity_per_day} маш/сутки
             <br />
-            Загрузка: {cp.load_pct}%
+            Ожидают: <b>{cp.waiting_now}</b> · сейчас {cp.trucks_last_hour} маш/ч
+            <br />
+            Ожидание: <b>{cp.est_wait_hours >= 24 ? "24+ ч (критично)" : `≈ ${cp.est_wait_hours} ч`}</b>
           </Popup>
         </CircleMarker>
       ))}
