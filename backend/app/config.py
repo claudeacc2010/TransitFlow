@@ -29,6 +29,21 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-haiku-4-5-20251001"
 
+    # --- Верификация email при регистрации (Resend HTTP API) ---
+    # SMTP на Railway заблокирован (порты 25/465/587), поэтому шлём письма
+    # через Resend по HTTPS. Включается одним ключом RESEND_API_KEY; без него
+    # регистрация работает как раньше (авто-подтверждение).
+    # Отправитель onboarding@resend.dev не требует своего домена, но письма
+    # уходят только на адрес владельца Resend-аккаунта (хватает для демо).
+    resend_api_key: str | None = None
+    resend_from: str = "TransitFlow <onboarding@resend.dev>"
+    # Базовый URL для ссылки в письме; если пуст — берём из запроса.
+    public_base_url: str | None = None
+
+    @property
+    def email_verification_enabled(self) -> bool:
+        return bool(self.resend_api_key)
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",

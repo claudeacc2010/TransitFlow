@@ -603,6 +603,16 @@ button:disabled {
   font-size: 14px;
   margin-top: 12px;
 }
+/* Баннер «email подтверждён» на форме входа */
+.verify-ok {
+  color: #3fb68b;
+  background: #3fb68b12;
+  border: 1px solid #3fb68b40;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin: 12px 0;
+}
 .empty {
   color: var(--faint);
   text-align: center;
