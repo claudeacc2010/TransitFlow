@@ -15,6 +15,7 @@ from app.routers import checkpoints as checkpoints_router
 from app.routers import events as events_router
 from app.routers import passes as passes_router
 from app.routers import requests as requests_router
+from app.routers import routes as routes_router
 from app.routers import slots as slots_router
 
 
@@ -44,6 +45,7 @@ app.add_middleware(
 
 app.include_router(auth_router.router)
 app.include_router(requests_router.router)
+app.include_router(routes_router.router)
 app.include_router(assignments_router.router)
 app.include_router(checkpoints_router.router)
 app.include_router(slots_router.router)

@@ -56,6 +56,8 @@ export default function Shipper() {
   const [busy, setBusy] = useState(false);
   const [rec, setRec] = useState(null); // рекомендованная цена (§2)
   const [recBusy, setRecBusy] = useState(false);
+  const [routes, setRoutes] = useState(null); // сравнение маршрутов (§4)
+  const [routesBusy, setRoutesBusy] = useState(false);
 
   async function load() {
     try {
@@ -102,6 +104,24 @@ export default function Shipper() {
     }
   }
 
+  // §4: сравнить маршруты от А до Б с учётом очередей на узлах.
+  async function compareRoutes() {
+    if (!form.origin || !form.destination) {
+      setError("Для сравнения маршрутов укажите откуда и куда");
+      return;
+    }
+    setError("");
+    setRoutesBusy(true);
+    try {
+      const q = new URLSearchParams({ origin: form.origin, destination: form.destination });
+      setRoutes(await api(`/routes/recommend?${q.toString()}`));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRoutesBusy(false);
+    }
+  }
+
   // Предупреждение, если своя цена занижена относительно рекомендованной >20%.
   const priceLow =
     rec && form.price_offer !== "" && Number(form.price_offer) < rec.recommended * 0.8;
@@ -117,6 +137,7 @@ export default function Shipper() {
       });
       setForm({ ...EMPTY, desired_date: todayISO() });
       setRec(null);
+      setRoutes(null);
       await load();
     } catch (err) {
       setError(err.message);
@@ -234,6 +255,19 @@ export default function Shipper() {
               required
             />
 
+            {/* §4: сравнение маршрутов с учётом очередей на узлах */}
+            <div className="route-box">
+              <button
+                type="button"
+                className="btn-ghost btn-block"
+                onClick={compareRoutes}
+                disabled={routesBusy}
+              >
+                {routesBusy ? "Считаем…" : "Сравнить маршруты (с учётом очередей)"}
+              </button>
+              {routes && <RouteCompare routes={routes} />}
+            </div>
+
             {/* §2: рекомендованная цена + своя цена */}
             <div className="price-box">
               <button
@@ -306,6 +340,32 @@ export default function Shipper() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+// §4: сравнение вариантов маршрута с пометкой рекомендованного.
+function RouteCompare({ routes }) {
+  return (
+    <div className="route-cards">
+      {routes.options.map((o) => (
+        <div key={o.name} className={`route-card${o.recommended ? " route-card-rec" : ""}`}>
+          <div className="route-card-head">
+            <span className="route-name">{o.name}</span>
+            {o.recommended && <span className="chip chip-rec">Рекомендуем</span>}
+          </div>
+          <div className="route-path">{o.waypoints.map((w) => w.name).join(" → ")}</div>
+          <div className="route-stats">
+            <span>{o.distance_km} км</span>
+            <span>в пути ≈ {o.base_hours} ч</span>
+            <span className={o.queue_hours > 0 ? "route-queue-bad" : "route-queue-ok"}>
+              очередь ≈ {o.queue_hours} ч
+            </span>
+            <span className="route-total">итого ≈ {o.total_hours} ч</span>
+          </div>
+          {o.reason && <div className="route-reason">{o.reason}</div>}
+        </div>
+      ))}
+    </div>
   );
 }
 

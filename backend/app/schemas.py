@@ -299,3 +299,27 @@ class MarketRateOut(BaseModel):
 
     avg_price_per_km: float | None
     sample_size: int
+
+
+# --- §4: маршруты с рекомендацией -----------------------------------------
+class RouteWaypointOut(BaseModel):
+    name: str
+    checkpoint: str | None = None      # имя узла, если точка — это узел
+    est_wait_hours: float = 0.0        # ожидание в очереди на узле (0 — не узел)
+
+
+class RouteOptionOut(BaseModel):
+    name: str
+    distance_km: float
+    base_hours: float                  # время в пути без очередей
+    queue_hours: float                 # суммарное ожидание на узлах маршрута
+    total_hours: float                 # base_hours + queue_hours (он же score)
+    waypoints: list[RouteWaypointOut]
+    recommended: bool = False
+    reason: str | None = None          # пояснение у рекомендованного варианта
+
+
+class RouteRecommendOut(BaseModel):
+    origin: str
+    destination: str
+    options: list[RouteOptionOut]

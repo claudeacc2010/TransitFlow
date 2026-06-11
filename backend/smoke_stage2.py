@@ -101,6 +101,27 @@ check(
 r = c.get("/api/analytics/breakdown", headers=auth(an), params={"by": "hacker"})
 check(r.status_code == 422, f"breakdown by=hacker -> {r.status_code} (ожидался 422)")
 
+print("6b) §4: рекомендация маршрута с учётом очередей")
+r = c.get("/api/routes/recommend", headers=auth(an),
+          params={"origin": "Актау", "destination": "Туркменистан"})
+check(r.status_code == 200, f"GET routes/recommend -> {r.status_code}")
+rr = r.json()
+check(len(rr["options"]) == 2, f"вариантов маршрута: {len(rr['options'])}")
+rec = [o for o in rr["options"] if o["recommended"]]
+check(len(rec) == 1, "ровно один вариант помечен рекомендованным")
+check(rec[0]["reason"], f"у рекомендованного есть причина: {rec[0].get('reason')}")
+# рекомендованный должен иметь минимальный total_hours
+check(rec[0]["total_hours"] == min(o["total_hours"] for o in rr["options"]),
+      "рекомендован вариант с минимальным total_hours (с учётом очередей)")
+# у каждого варианта total = base + queue
+check(all(abs(o["total_hours"] - (o["base_hours"] + o["queue_hours"])) < 0.05 for o in rr["options"]),
+      "total_hours = base_hours + queue_hours для всех вариантов")
+# незнакомая пара -> один прямой вариант
+r2 = c.get("/api/routes/recommend", headers=auth(an),
+           params={"origin": "Прага", "destination": "Лиссабон"})
+check(r2.status_code == 200 and len(r2.json()["options"]) == 1,
+      "незнакомая пара -> один прямой вариант (fallback)")
+
 print("7) AI-сводка (живой вызов провайдера)")
 r = c.post("/api/analytics/ai-summary", headers=auth(an))
 check(r.status_code == 200, f"POST ai-summary -> {r.status_code}")

@@ -285,6 +285,69 @@ button:disabled {
   background: #6aa6ff1a;
   border: 1px solid #6aa6ff55;
 }
+.chip-rec {
+  color: #4ade80;
+  background: #4ade801a;
+  border: 1px solid #4ade8055;
+}
+
+/* --- §4: сравнение маршрутов --- */
+.route-box {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.route-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.route-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff05;
+}
+.route-card-rec {
+  border-color: #4ade8088;
+  background: #4ade800d;
+}
+.route-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.route-name {
+  font-weight: 600;
+}
+.route-path {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.route-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.route-queue-ok {
+  color: #4ade80;
+}
+.route-queue-bad {
+  color: var(--accent);
+}
+.route-total {
+  font-weight: 700;
+}
+.route-reason {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #4ade80;
+}
 
 /* --- Чекбокс-строка в форме --- */
 .check-row {
