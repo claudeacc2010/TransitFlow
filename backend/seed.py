@@ -195,6 +195,14 @@ def seed_users(db: Session) -> dict[str, list[User]]:
             db, email, name=name, role=role, company=company,
             password_hash=hash_password(DEMO_PASSWORD),
         )
+    # Аккаунт акимата для питча: akimat@123 / 123456
+    get_or_create_user(
+        db, "akimat@123",
+        name="Аналитик акимата",
+        role=UserRole.analyst,
+        company="Акимат Мангистауской области",
+        password_hash=hash_password("123456"),
+    )
 
     shippers: list[User] = []
     carriers: list[User] = []
