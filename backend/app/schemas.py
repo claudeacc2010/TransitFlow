@@ -128,6 +128,14 @@ class BreakdownItem(BaseModel):
     trucks: int
 
 
+class WeekdayLoadItem(BaseModel):
+    """§7: суммарный поток машин по дню недели (Пн=1 … Вс=7)."""
+
+    dow: int
+    label: str
+    trucks: int
+
+
 class AISummaryOut(BaseModel):
     summary: str
     provider: str

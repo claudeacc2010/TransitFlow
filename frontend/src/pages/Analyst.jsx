@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import AiSummary from "../components/analyst/AiSummary";
+import Bottlenecks from "../components/analyst/Bottlenecks";
 import Breakdowns from "../components/analyst/Breakdowns";
 import CheckpointMap from "../components/analyst/CheckpointMap";
 import EventFeed from "../components/analyst/EventFeed";
 import Forecast from "../components/analyst/Forecast";
 import TrafficChart from "../components/analyst/TrafficChart";
+import WeekdayLoad from "../components/analyst/WeekdayLoad";
 import { api } from "../api";
 
 function StatCard({ label, value, unit }) {
@@ -78,6 +80,10 @@ export default function Analyst() {
 
       <TrafficChart checkpoints={checkpoints} />
       <Breakdowns />
+      <div className="grid-2">
+        {checkpoints.length > 0 && <Bottlenecks checkpoints={checkpoints} />}
+        <WeekdayLoad />
+      </div>
       <Forecast checkpoints={checkpoints} />
     </Layout>
   );

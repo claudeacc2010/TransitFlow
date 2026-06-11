@@ -122,6 +122,15 @@ r2 = c.get("/api/routes/recommend", headers=auth(an),
 check(r2.status_code == 200 and len(r2.json()["options"]) == 1,
       "незнакомая пара -> один прямой вариант (fallback)")
 
+print("6c) §7: нагрузка по дням недели")
+r = c.get("/api/analytics/weekday-load", headers=auth(an))
+check(r.status_code == 200, f"GET weekday-load -> {r.status_code}")
+wd = r.json()
+check(len(wd) == 7, f"дней недели: {len(wd)}")
+check([d["dow"] for d in wd] == [1, 2, 3, 4, 5, 6, 7], "порядок Пн..Вс (dow 1..7)")
+check([d["label"] for d in wd] == ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], "русские подписи дней")
+check(sum(d["trucks"] for d in wd) > 0, "суммарный поток по неделе > 0")
+
 print("7) AI-сводка (живой вызов провайдера)")
 r = c.post("/api/analytics/ai-summary", headers=auth(an))
 check(r.status_code == 200, f"POST ai-summary -> {r.status_code}")

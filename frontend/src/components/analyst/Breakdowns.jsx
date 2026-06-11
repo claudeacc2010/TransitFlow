@@ -17,6 +17,7 @@ import { TOOLTIP_STYLE } from "./TrafficChart";
 const COLORS = ["#f5a623", "#3fb68b", "#6aa6ff", "#e2574c", "#8a94a6"];
 
 function PiePanel({ title, items }) {
+  const total = items.reduce((s, it) => s + it.trucks, 0) || 1;
   return (
     <div className="panel">
       <h3>{title}</h3>
@@ -42,7 +43,7 @@ function PiePanel({ title, items }) {
         {items.map((it, i) => (
           <span key={it.key}>
             <i style={{ background: COLORS[i % COLORS.length] }} />
-            {it.label}
+            {it.label} — {Math.round((it.trucks / total) * 100)}%
           </span>
         ))}
       </div>

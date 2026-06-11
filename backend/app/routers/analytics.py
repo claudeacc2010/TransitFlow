@@ -24,8 +24,14 @@ from app.models import (
     User,
     UserRole,
 )
-from app.routers.checkpoints import _last_hour_loads
-from app.schemas import AISummaryOut, AnalyticsOverview, BreakdownItem, TimeseriesPoint
+from app.routers.checkpoints import _last_hour_loads, _queue_estimates
+from app.schemas import (
+    AISummaryOut,
+    AnalyticsOverview,
+    BreakdownItem,
+    TimeseriesPoint,
+    WeekdayLoadItem,
+)
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -44,6 +50,18 @@ _DIRECTION_RU = {
     Direction.import_: "Импорт",
     Direction.transit: "Транзит",
 }
+# Postgres extract('dow'): 0=вс … 6=сб. Переводим в порядок Пн(1)…Вс(7).
+_DOW_RU = {0: (7, "Вс"), 1: (1, "Пн"), 2: (2, "Вт"), 3: (3, "Ср"),
+           4: (4, "Чт"), 5: (5, "Пт"), 6: (6, "Сб")}
+
+
+def _bottlenecks(db: Session) -> list[tuple[str, float]]:
+    """Узлы по убыванию ожидания в очереди (§5) — для §7 и AI-сводки."""
+    cps = list(db.scalars(select(Checkpoint)))
+    capacities = {cp.id: cp.capacity_per_hour for cp in cps}
+    queues = _queue_estimates(db, capacities)
+    pairs = [(cp.name, queues.get(cp.id, (0, 0.0))[1]) for cp in cps]
+    return sorted(pairs, key=lambda p: p[1], reverse=True)
 
 
 def _history_end(db: Session) -> datetime:
@@ -148,6 +166,31 @@ def breakdown(
     ]
 
 
+@router.get("/weekday-load", response_model=list[WeekdayLoadItem])
+def weekday_load(
+    db: Session = Depends(get_db),
+    _user: User = Depends(analyst_only),
+    days: int = Query(default=90, ge=7, le=90),
+) -> list[WeekdayLoadItem]:
+    """§7: суммарный поток по дням недели — где пик нагрузки за период."""
+    end = _history_end(db)
+    rows = db.execute(
+        select(
+            func.extract("dow", TrafficHistory.ts).label("dow"),
+            func.sum(TrafficHistory.trucks_count).label("trucks"),
+        )
+        .where(TrafficHistory.ts > end - timedelta(days=days))
+        .group_by("dow")
+    ).all()
+
+    by_dow = {int(r.dow): int(r.trucks) for r in rows}
+    items = [
+        WeekdayLoadItem(dow=order, label=label, trucks=by_dow.get(pg_dow, 0))
+        for pg_dow, (order, label) in _DOW_RU.items()
+    ]
+    return sorted(items, key=lambda i: i.dow)
+
+
 @router.post("/ai-summary", response_model=AISummaryOut)
 def ai_summary(
     db: Session = Depends(get_db),
@@ -184,10 +227,27 @@ def ai_summary(
         .order_by(func.avg(TrafficHistory.trucks_count).desc())
     ).first()
 
+    # §7: узкое место (максимальная очередь) и пиковый день недели — пусть
+    # AI опирается на них и сам предлагает «усилить смены по <дню>».
+    bottlenecks = _bottlenecks(db)
+    top = bottlenecks[0] if bottlenecks else None
+    wd_rows = db.execute(
+        select(
+            func.extract("dow", TrafficHistory.ts).label("dow"),
+            func.sum(TrafficHistory.trucks_count).label("trucks"),
+        ).group_by("dow")
+    ).all()
+    peak_dow = max(wd_rows, key=lambda r: r.trucks, default=None)
+    peak_day = _DOW_RU.get(int(peak_dow.dow), (0, "н/д"))[1] if peak_dow else "н/д"
+
     stats = {
         "машин_за_последние_сутки": int(trucks_today),
         "активных_заявок": int(active),
         "самый_загруженный_узел_за_неделю": busiest.name if busiest else "н/д",
+        "узкое_место_очередь": (
+            f"{top[0]} ≈ {top[1]} ч" if top and top[1] > 0 else "очередей нет"
+        ),
+        "пиковый_день_недели": peak_day,
         "пиковый_час_UTC": f"{int(peak.hour):02d}:00" if peak else "н/д",
         "период_истории_дней": 90,
     }
