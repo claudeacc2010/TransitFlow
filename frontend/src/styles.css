@@ -718,6 +718,22 @@ button:disabled {
   border-radius: 50%;
   margin-right: 6px;
 }
+.legend-note {
+  font-style: italic;
+  opacity: 0.8;
+}
+/* §map: стрелки направления на транзитных коридорах */
+.corridor-arrow {
+  background: none;
+  border: none;
+}
+.corridor-arrow span {
+  display: inline-block;
+  font-size: 16px;
+  line-height: 18px;
+  text-align: center;
+  text-shadow: 0 0 3px #0b0e14;
+}
 .select-inline {
   width: auto;
   padding: 6px 10px;

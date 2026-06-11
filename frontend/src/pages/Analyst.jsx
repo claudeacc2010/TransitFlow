@@ -64,12 +64,13 @@ export default function Analyst() {
 
       <div className="grid-map">
         <div className="panel map-panel">
-          <h3>Узлы региона — текущая загрузка</h3>
+          <h3>Узлы региона — ожидание в очереди</h3>
           {checkpoints.length > 0 && <CheckpointMap checkpoints={checkpoints} />}
           <div className="legend">
-            <span><i style={{ background: "#3fb68b" }} /> до 50%</span>
-            <span><i style={{ background: "#f5a623" }} /> 50–85%</span>
-            <span><i style={{ background: "#e2574c" }} /> от 85%</span>
+            <span><i style={{ background: "#3fb68b" }} /> свободно (&lt; 3 ч)</span>
+            <span><i style={{ background: "#f5a623" }} /> напряжённо (3–8 ч)</span>
+            <span><i style={{ background: "#e2574c" }} /> затор (8+ ч)</span>
+            <span className="legend-note">стрелки — транзитные коридоры</span>
           </div>
         </div>
         <div className="rail">
