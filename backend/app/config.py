@@ -29,20 +29,19 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-haiku-4-5-20251001"
 
-    # --- Верификация email при регистрации ---
-    # Включается только когда заданы все SMTP-переменные; без них регистрация
-    # работает как раньше (авто-подтверждение) — демо ничего не ломает.
-    smtp_host: str | None = None          # напр. smtp.gmail.com
-    smtp_port: int = 587                  # STARTTLS
-    smtp_user: str | None = None
-    smtp_password: str | None = None      # для Gmail — App Password
-    smtp_from: str | None = None          # по умолчанию = smtp_user
+    # --- Верификация email при регистрации (Brevo HTTP API) ---
+    # SMTP на Railway заблокирован (порты 25/465/587), поэтому шлём письма
+    # через Brevo по HTTPS. Включается, только когда заданы ключ и отправитель;
+    # без них регистрация работает как раньше (авто-подтверждение).
+    brevo_api_key: str | None = None
+    brevo_sender_email: str | None = None   # подтверждённый отправитель в Brevo
+    brevo_sender_name: str = "TransitFlow"
     # Базовый URL для ссылки в письме; если пуст — берём из запроса.
     public_base_url: str | None = None
 
     @property
     def email_verification_enabled(self) -> bool:
-        return bool(self.smtp_host and self.smtp_user and self.smtp_password)
+        return bool(self.brevo_api_key and self.brevo_sender_email)
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),

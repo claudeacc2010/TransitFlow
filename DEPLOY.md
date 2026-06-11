@@ -283,25 +283,26 @@ git push
 
 ---
 
-## Верификация email при регистрации (опционально)
+## Верификация email при регистрации (Brevo, опционально)
 
-Без SMTP-переменных регистрация работает как раньше (сразу логин).
-Чтобы при регистрации на почту уходило письмо со ссылкой подтверждения,
-добавь в Railway → сервис **app** → **Variables**:
+⚠️ **SMTP на Railway не работает** — исходящие порты 25/465/587 заблокированы
+(защита от спама). Поэтому письма шлём через **Brevo** по HTTPS (порт 443).
+
+Без Brevo-переменных регистрация работает как раньше (сразу логин).
+Чтобы включить письма со ссылкой подтверждения:
+
+1. Зарегистрируйся на https://www.brevo.com (бесплатно, 300 писем/день).
+2. **Senders, Domains & Dedicated IPs → Senders** → добавь свой email как
+   отправителя и подтверди его (Brevo пришлёт письмо с кнопкой).
+3. **SMTP & API → API Keys** → создай ключ (вид `xkeysib-…`).
+4. В Railway → сервис **app** → **Variables** добавь:
 
 | Переменная | Значение |
 |---|---|
-| `SMTP_HOST` | `smtp.gmail.com` |
-| `SMTP_PORT` | `587` |
-| `SMTP_USER` | твой Gmail, напр. `claudeacc2010@gmail.com` |
-| `SMTP_PASSWORD` | **App Password** (не обычный пароль!) |
+| `BREVO_API_KEY` | `xkeysib-…` (созданный ключ) |
+| `BREVO_SENDER_EMAIL` | твой **подтверждённый** в Brevo email |
+| `BREVO_SENDER_NAME` | `TransitFlow` (необязательно) |
 | `PUBLIC_BASE_URL` | `https://transitflow-production-3603.up.railway.app` |
-
-Как получить App Password для Gmail:
-1. https://myaccount.google.com → Security → включи **2-Step Verification**
-   (если ещё не включена).
-2. Там же → **App passwords** → создай пароль для «Mail».
-3. Скопируй 16-значный код (без пробелов) в `SMTP_PASSWORD`.
 
 Поведение с включённой верификацией:
 - регистрация → письмо со ссылкой, аккаунт неактивен;

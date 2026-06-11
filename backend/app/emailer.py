@@ -1,22 +1,16 @@
-"""Отправка письма подтверждения email через SMTP (STARTTLS).
+"""Отправка письма подтверждения email через Brevo HTTP API.
 
-Синхронно и просто: для MVP достаточно. Если SMTP не настроен
-(settings.email_verification_enabled == False), модуль не используется.
-
-Подключаемся принудительно по IPv4: в контейнерах Railway нет IPv6-маршрута,
-а getaddrinfo нередко отдаёт AAAA-адрес Gmail первым → [Errno 101] Network is
-unreachable. Резолвим A-запись сами, но при STARTTLS подставляем настоящее имя
-хоста, чтобы проверка сертификата проходила.
+SMTP на Railway недоступен (исходящие порты 25/465/587 заблокированы), поэтому
+письма шлём по HTTPS через Brevo (https://api.brevo.com). Если верификация не
+настроена (settings.email_verification_enabled == False), модуль не вызывается.
 """
 from __future__ import annotations
 
-import smtplib
-import socket
-import ssl
-from email.message import EmailMessage
+import httpx
 
 from app.config import settings
 
+_BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 _SUBJECT = "TransitFlow — подтвердите ваш email"
 
 _BODY = """Здравствуйте, {name}!
@@ -33,37 +27,23 @@ _BODY = """Здравствуйте, {name}!
 """
 
 
-def _resolve_ipv4(host: str, port: int) -> str:
-    """Первый IPv4-адрес хоста (обходим IPv6 без маршрута на Railway)."""
-    infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
-    return infos[0][4][0]
-
-
 def send_verification_email(*, to: str, name: str, link: str) -> None:
-    """Шлёт письмо со ссылкой подтверждения. Бросает исключение при сбое SMTP."""
-    msg = EmailMessage()
-    msg["Subject"] = _SUBJECT
-    msg["From"] = settings.smtp_from or settings.smtp_user
-    msg["To"] = to
-    msg.set_content(_BODY.format(name=name, link=link))
-
-    host = settings.smtp_host
-    port = settings.smtp_port
-    ipv4 = _resolve_ipv4(host, port)
-
-    smtp = smtplib.SMTP(timeout=20)
-    try:
-        smtp.connect(ipv4, port)
-        # Возвращаем настоящее имя хоста, чтобы STARTTLS проверил сертификат
-        # по нему, а не по IP-адресу.
-        smtp._host = host
-        smtp.ehlo()
-        smtp.starttls(context=ssl.create_default_context())
-        smtp.ehlo()
-        smtp.login(settings.smtp_user, settings.smtp_password)
-        smtp.send_message(msg)
-    finally:
-        try:
-            smtp.quit()
-        except Exception:
-            pass
+    """Шлёт письмо со ссылкой подтверждения через Brevo. Бросает исключение при сбое."""
+    payload = {
+        "sender": {
+            "name": settings.brevo_sender_name,
+            "email": settings.brevo_sender_email,
+        },
+        "to": [{"email": to, "name": name}],
+        "subject": _SUBJECT,
+        "textContent": _BODY.format(name=name, link=link),
+    }
+    headers = {
+        "api-key": settings.brevo_api_key,
+        "accept": "application/json",
+        "content-type": "application/json",
+    }
+    resp = httpx.post(_BREVO_URL, json=payload, headers=headers, timeout=20)
+    # Brevo возвращает 201 при успехе. Иначе — поднимаем с телом ответа.
+    if resp.status_code >= 400:
+        raise RuntimeError(f"Brevo {resp.status_code}: {resp.text}")
