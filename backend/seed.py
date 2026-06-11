@@ -19,6 +19,7 @@ RNG детерминирован (random.seed), поэтому первый пр
 """
 from __future__ import annotations
 
+import os
 import random
 import sys
 import uuid
@@ -500,6 +501,14 @@ def _seed_bookings(db: Session, assignments: list[Assignment], checkpoints: dict
 
 def main() -> None:
     random.seed(RNG_SEED)
+    # RESET_DB=1 — разовый сброс схемы на проде, когда устарел enum/столбец
+    # (create_all не мигрирует существующие типы). После успешного деплоя
+    # переменную надо снять, иначе каждый редеплой будет стирать данные.
+    if os.getenv("RESET_DB", "").strip().lower() in ("1", "true", "yes"):
+        from app.dbreset import reset_database
+
+        print("RESET_DB=1 → полный сброс схемы (drop таблиц + enum-типов)…")
+        reset_database()
     init_db()
     print("Сидирование TransitFlow…")
     with SessionLocal() as db:
