@@ -15,8 +15,9 @@ env/
 # node / frontend build
 node_modules/
 frontend/dist/
-backend/app/static/
 backend/static/
+# backend/app/static — собранный фронт, КОММИТИТСЯ намеренно: Railway собирает
+# только Python в backend/, поэтому статику UI везём в репозитории.
 
 # os / editor
 .DS_Store

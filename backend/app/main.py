@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 from app.routers import analytics as analytics_router
@@ -58,3 +61,29 @@ app.include_router(events_router.router)
 @app.get("/api/health", tags=["meta"])
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "transitflow"}
+
+
+# --- Раздача собранного фронтенда (Vite) с того же домена ---------------------
+# На Railway корень сборки — backend/, поэтому фронт собирается локально и
+# кладётся в backend/app/static (коммитится в репозиторий). Локально без сборки
+# каталога просто нет — API работает как раньше, фронт крутится на Vite :5173.
+STATIC_DIR = Path(__file__).parent / "static"
+
+if STATIC_DIR.is_dir():
+    app.mount(
+        "/assets",
+        StaticFiles(directory=STATIC_DIR / "assets"),
+        name="assets",
+    )
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def spa(full_path: str) -> FileResponse:
+        # Маршруты API и /pass зарегистрированы выше и перехватываются раньше;
+        # на всякий случай не отдаём им index.html, а честно возвращаем 404.
+        if full_path.startswith(("api/", "pass/")):
+            raise HTTPException(status_code=404)
+        candidate = STATIC_DIR / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        # Любой клиентский маршрут React Router → отдаём SPA-оболочку.
+        return FileResponse(STATIC_DIR / "index.html")
