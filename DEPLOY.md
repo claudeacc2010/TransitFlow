@@ -257,3 +257,26 @@ Settings → Developer settings → Tokens).
 
 Swagger для ручной проверки на питче:
 https://transitflow-production-3603.up.railway.app/docs
+
+---
+
+## Обновление фронтенда на проде
+
+Railway собирает только Python (Root Directory = `backend`), поэтому
+React-сборка везётся в репозитории в `backend/app/static/` и раздаётся
+FastAPI с того же домена. После любых правок во `frontend/` пересобери и
+закоммить статику:
+
+```powershell
+cd frontend
+npm run build
+Remove-Item -Recurse -Force ..\backend\app\static\*
+Copy-Item -Recurse frontend\dist\* ..\backend\app\static\
+cd ..
+git add backend/app/static
+git commit -m "rebuild frontend"
+git push
+```
+
+Проверка после деплоя — открой корень домена (не только `/docs`):
+`https://ТВОЙ-ДОМЕН.up.railway.app/` → должен загрузиться интерфейс.
