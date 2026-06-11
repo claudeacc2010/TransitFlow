@@ -6,6 +6,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum as SAEnum,
     ForeignKey,
@@ -119,6 +120,12 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), nullable=False, index=True)
     company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Верификация email. Сидовые/демо-аккаунты создаются сразу подтверждёнными;
+    # для существующих строк ALTER в init_db ставит default true (не запираем).
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    verify_token: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
 
     requests: Mapped[list["CargoRequest"]] = relationship(
         back_populates="shipper", foreign_keys="CargoRequest.shipper_id"

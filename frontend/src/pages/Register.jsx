@@ -22,6 +22,8 @@ export default function Register() {
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // Если на сервере включена верификация email — показываем «проверьте почту».
+  const [sentTo, setSentTo] = useState("");
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -30,19 +32,40 @@ export default function Register() {
     setError("");
     setBusy(true);
     try {
-      await register({
+      const data = await register({
         role: form.role,
         name: form.name,
         company: form.company || null,
         email: form.email,
         password: form.password,
       });
-      // Дальше роутер сам отправит на кабинет по роли.
+      if (data.verification_required) setSentTo(form.email);
+      // Иначе роутер сам отправит на кабинет по роли.
     } catch (err) {
       setError(err.message || "Не удалось зарегистрироваться");
     } finally {
       setBusy(false);
     }
+  }
+
+  if (sentTo) {
+    return (
+      <div className="login-wrap">
+        <div className="panel login-card">
+          <div className="brand" style={{ marginBottom: 4 }}>
+            TransitFlow
+            <small>Подтвердите email</small>
+          </div>
+          <p>
+            Мы отправили письмо на <b>{sentTo}</b>. Перейдите по ссылке из
+            письма, чтобы активировать аккаунт, затем войдите.
+          </p>
+          <p className="auth-switch">
+            <Link to="/login">К форме входа</Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

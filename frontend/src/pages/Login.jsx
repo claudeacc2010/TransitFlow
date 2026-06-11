@@ -1,6 +1,6 @@
 // Логин: форма + кнопки быстрого входа демо-аккаунтов (раздел 4).
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { useAuth } from "../auth";
 
@@ -16,6 +16,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // После перехода по ссылке из письма: /login?verified=1 (или 0 при ошибке).
+  const [params] = useSearchParams();
+  const verified = params.get("verified");
 
   async function submit(e, demoEmail) {
     if (e) e.preventDefault();
@@ -38,6 +41,15 @@ export default function Login() {
           TransitFlow
           <small>Координация транзита · Мангистау</small>
         </div>
+
+        {verified === "1" && (
+          <div className="verify-ok">Email подтверждён — теперь войдите.</div>
+        )}
+        {verified === "0" && (
+          <div className="error">
+            Ссылка подтверждения недействительна или уже использована.
+          </div>
+        )}
 
         <form onSubmit={submit}>
           <label>Email</label>

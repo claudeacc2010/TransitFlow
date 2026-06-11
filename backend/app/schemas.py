@@ -58,6 +58,14 @@ class TokenResponse(BaseModel):
     user: UserOut
 
 
+class RegisterResponse(BaseModel):
+    """Ответ регистрации: либо токен (авто-логин), либо «подтвердите email»."""
+    access_token: str | None = None
+    token_type: str = "bearer"
+    verification_required: bool = False
+    user: UserOut
+
+
 # ---------------------------------------------------------------------------
 # Краткое представление пользователя (для вложенных полей заявки)
 # ---------------------------------------------------------------------------

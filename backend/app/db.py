@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import settings
@@ -36,3 +36,16 @@ def init_db() -> None:
     from app import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+
+    # Мини-миграция (без Alembic): create_all не добавляет колонки в уже
+    # существующие таблицы. DEFAULT true — существующие пользователи (сид,
+    # ранняя саморегистрация) считаются подтверждёнными, не запираем их.
+    with engine.begin() as conn:
+        conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+            "email_verified BOOLEAN NOT NULL DEFAULT true"
+        ))
+        conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+            "verify_token VARCHAR(64)"
+        ))
