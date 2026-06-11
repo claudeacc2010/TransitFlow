@@ -32,19 +32,17 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
-  // Регистрация отправителя/перевозчика. Если на сервере включена верификация
-  // email, токена в ответе нет (verification_required: true) — пользователь
-  // сначала подтверждает почту; иначе авто-логин как раньше.
+  // Регистрация отправителя/перевозчика: бэкенд сразу возвращает токен,
+  // поэтому после неё пользователь уже залогинен.
   async function register(payload) {
     const data = await api("/auth/register", {
       method: "POST",
       body: payload,
       auth: false,
     });
-    if (data.verification_required) return data;
     setToken(data.access_token);
     setUser(data.user);
-    return data;
+    return data.user;
   }
 
   function logout() {

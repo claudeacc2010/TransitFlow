@@ -10,7 +10,7 @@ import EventFeed from "../components/analyst/EventFeed";
 import Forecast from "../components/analyst/Forecast";
 import TrafficChart from "../components/analyst/TrafficChart";
 import WeekdayLoad from "../components/analyst/WeekdayLoad";
-import { api } from "../api";
+import { api, downloadFile } from "../api";
 
 function StatCard({ label, value, unit }) {
   return (
@@ -28,6 +28,7 @@ export default function Analyst() {
   const [overview, setOverview] = useState(null);
   const [checkpoints, setCheckpoints] = useState([]);
   const [error, setError] = useState("");
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
     Promise.all([api("/analytics/overview"), api("/checkpoints")])
@@ -38,8 +39,28 @@ export default function Analyst() {
       .catch((e) => setError(e.message));
   }, []);
 
+  async function downloadReport() {
+    setError("");
+    setPdfBusy(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      await downloadFile("/analytics/report.pdf", `transitflow_report_${today}.pdf`);
+    } catch (e) {
+      setError(e.message || "Не удалось сформировать отчёт");
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   return (
     <Layout>
+      <div className="analyst-head">
+        <h2>Дашборд акимата</h2>
+        <button className="btn-primary btn-sm" onClick={downloadReport} disabled={pdfBusy}>
+          {pdfBusy ? "Готовим отчёт…" : "📄 Скачать PDF-отчёт"}
+        </button>
+      </div>
+
       {error && <div className="error">{error}</div>}
 
       {overview && (

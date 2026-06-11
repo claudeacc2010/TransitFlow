@@ -8,12 +8,14 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.ai_summary import generate_summary
 from app.auth import require_role
 from app.db import get_db
+from app.reports import build_analytics_pdf
 from app.models import (
     CargoRequest,
     CargoType,
@@ -254,3 +256,42 @@ def ai_summary(
 
     text, source = generate_summary(stats)
     return AISummaryOut(summary=text, provider=source, generated_at=datetime.now(timezone.utc))
+
+
+@router.get("/report.pdf")
+def report_pdf(
+    db: Session = Depends(get_db),
+    user: User = Depends(analyst_only),
+) -> Response:
+    """§7: PDF-отчёт акимата — KPI, узкие места, дни недели, груз, AI-сводка."""
+    now = datetime.now(timezone.utc)
+
+    # Параметры days/by передаём явно: при прямом вызове (не через HTTP)
+    # их значения по умолчанию — объекты Query(...), а не числа.
+    ov = overview(db=db, _user=user)
+    wd = weekday_load(db=db, _user=user, days=90)
+    cargo_items = breakdown(db=db, _user=user, by="cargo_type", days=90)
+    bottlenecks = [(name, round(w, 1)) for name, w in _bottlenecks(db)]
+    summary = ai_summary(db=db, _user=user)
+
+    pdf = build_analytics_pdf(
+        generated_at=now,
+        overview={
+            "trucks_today": ov.trucks_today,
+            "tons_per_day": ov.tons_per_day,
+            "active_requests": ov.active_requests,
+            "avg_load_pct": ov.avg_load_pct,
+        },
+        bottlenecks=bottlenecks,
+        weekday=[(i.label, i.trucks) for i in wd],
+        cargo=[(i.label, i.trucks) for i in cargo_items],
+        ai_text=summary.summary,
+        ai_provider=summary.provider,
+    )
+
+    filename = f"transitflow_report_{now:%Y-%m-%d}.pdf"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
