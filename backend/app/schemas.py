@@ -211,6 +211,8 @@ class RequestCreate(BaseModel):
     temp_mode: str | None = Field(default=None, max_length=32)
     ready_at: datetime | None = None
     urgency: Urgency = Urgency.normal
+    # §2: цена отправителя за перевозку, тг (опционально — можно создать без цены).
+    price_offer: float | None = Field(default=None, gt=0)
 
     @field_validator("adr_class")
     @classmethod
@@ -241,6 +243,49 @@ class RequestOut(BaseModel):
     temp_mode: str | None = None
     ready_at: datetime | None = None
     urgency: Urgency
+    distance_km: float | None = None
+    price_offer: float | None = None
     status: RequestStatus
     created_at: datetime
     assignment: AssignmentOut | None = None
+
+    @computed_field
+    @property
+    def price_per_km(self) -> float | None:
+        """Цена за км — для сравнения заказов перевозчиком."""
+        if self.price_offer and self.distance_km:
+            return round(self.price_offer / self.distance_km, 1)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# §2: рекомендация цены и рыночная ставка
+# ---------------------------------------------------------------------------
+class PriceRecommendIn(BaseModel):
+    cargo_type: CargoType
+    weight_t: float = Field(gt=0, le=100)
+    origin: str = Field(min_length=1, max_length=200)
+    destination: str = Field(min_length=1, max_length=200)
+    adr_class: str | None = None
+    temp_mode: str | None = None
+    urgency: Urgency = Urgency.normal
+
+
+class PriceFactorOut(BaseModel):
+    label: str
+    multiplier: float
+
+
+class PriceRecommendOut(BaseModel):
+    distance_km: float
+    weight_t: float
+    rate_per_km_t: float
+    recommended: int
+    factors: list[PriceFactorOut]
+
+
+class MarketRateOut(BaseModel):
+    """Средняя рыночная ставка тг/км по закрытым заявкам с ценой."""
+
+    avg_price_per_km: float | None
+    sample_size: int

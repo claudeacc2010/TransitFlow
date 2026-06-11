@@ -139,6 +139,9 @@ class CargoRequest(Base):
     urgency: Mapped[Urgency] = mapped_column(
         _enum(Urgency, "urgency"), nullable=False, default=Urgency.normal
     )
+    # §2: маркетплейс цен. distance_km — оценка плеча; price_offer — цена отправителя.
+    distance_km: Mapped[float | None] = mapped_column(Numeric(8, 1), nullable=True)
+    price_offer: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     status: Mapped[RequestStatus] = mapped_column(
         _enum(RequestStatus, "request_status"), nullable=False, default=RequestStatus.open, index=True
     )

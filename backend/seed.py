@@ -33,6 +33,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import hash_password
 from app.db import SessionLocal, init_db
+from app.pricing import recommend_price, route_distance_km
 from app.models import (
     Assignment,
     Booking,
@@ -388,10 +389,19 @@ def seed_requests(db: Session, users: dict[str, list[User]], checkpoints: dict[s
         attrs = _cargo_attrs(cargo, weight)
         # Готовность к отправке — утро желаемой даты (раздел §1: дата готовности).
         ready_at = datetime.combine(desired, time(hour=random.randint(6, 18)), tzinfo=timezone.utc)
+        # §2: расстояние и цена отправителя ≈ рекомендованная ±15%.
+        dist = route_distance_km(origin, dest)
+        rec = recommend_price(
+            distance_km=dist, weight_t=weight, cargo_type=cargo,
+            adr_class=attrs["adr_class"], temp_mode=attrs["temp_mode"],
+            urgent=attrs["urgency"] is Urgency.urgent,
+        )
+        price = int(round(rec.recommended * random.uniform(0.85, 1.15) / 1000) * 1000)
         req = CargoRequest(
             shipper_id=shipper.id, cargo_type=cargo, weight_t=weight,
             origin=origin, destination=dest, desired_date=desired,
-            ready_at=ready_at, status=status, created_at=created,
+            ready_at=ready_at, distance_km=dist, price_offer=price,
+            status=status, created_at=created,
             **attrs,
         )
         db.add(req)

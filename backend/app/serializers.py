@@ -53,6 +53,8 @@ def request_out(req: CargoRequest) -> RequestOut:
         temp_mode=req.temp_mode,
         ready_at=req.ready_at,
         urgency=req.urgency,
+        distance_km=float(req.distance_km) if req.distance_km is not None else None,
+        price_offer=float(req.price_offer) if req.price_offer is not None else None,
         status=req.status,
         created_at=req.created_at,
         assignment=assignment_out(req.assignment) if req.assignment else None,

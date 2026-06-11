@@ -2,19 +2,28 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth import get_current_user, require_role
-from app.db import get_db
 from app.models import (
     Assignment,
     CargoRequest,
     RequestStatus,
+    Urgency,
     User,
     UserRole,
 )
-from app.schemas import AcceptRequestIn, RequestCreate, RequestOut
+from app.db import get_db
+from app.pricing import recommend_price, route_distance_km
+from app.schemas import (
+    AcceptRequestIn,
+    MarketRateOut,
+    PriceRecommendIn,
+    PriceRecommendOut,
+    RequestCreate,
+    RequestOut,
+)
 from app.serializers import request_out
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
@@ -47,12 +56,58 @@ def create_request(
         temp_mode=payload.temp_mode,
         ready_at=payload.ready_at,
         urgency=payload.urgency,
+        # §2: расстояние оцениваем сразу — питает цену и тг/км в ленте.
+        distance_km=route_distance_km(payload.origin, payload.destination),
+        price_offer=payload.price_offer,
         status=RequestStatus.open,
     )
     db.add(req)
     db.commit()
     db.refresh(req)
     return request_out(req)
+
+
+@router.post("/recommend-price", response_model=PriceRecommendOut)
+def recommend_price_endpoint(
+    payload: PriceRecommendIn,
+    _user: User = Depends(get_current_user),
+) -> PriceRecommendOut:
+    """§2: рекомендованная цена от А до Б с разложением по факторам."""
+    dist = route_distance_km(payload.origin, payload.destination)
+    rec = recommend_price(
+        distance_km=dist,
+        weight_t=payload.weight_t,
+        cargo_type=payload.cargo_type,
+        adr_class=payload.adr_class,
+        temp_mode=payload.temp_mode,
+        urgent=payload.urgency is Urgency.urgent,
+    )
+    return PriceRecommendOut(
+        distance_km=rec.distance_km,
+        weight_t=rec.weight_t,
+        rate_per_km_t=rec.rate_per_km_t,
+        recommended=rec.recommended,
+        factors=[{"label": f.label, "multiplier": f.multiplier} for f in rec.factors],
+    )
+
+
+@router.get("/market-rate", response_model=MarketRateOut)
+def market_rate(
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+) -> MarketRateOut:
+    """§2: средняя рыночная ставка тг/км по закрытым заявкам с ценой."""
+    rows = db.execute(
+        select(CargoRequest.price_offer, CargoRequest.distance_km).where(
+            CargoRequest.status == RequestStatus.done,
+            CargoRequest.price_offer.isnot(None),
+            CargoRequest.distance_km.isnot(None),
+            CargoRequest.distance_km > 0,
+        )
+    ).all()
+    rates = [float(p) / float(d) for p, d in rows]
+    avg = round(sum(rates) / len(rates), 1) if rates else None
+    return MarketRateOut(avg_price_per_km=avg, sample_size=len(rates))
 
 
 @router.get("", response_model=list[RequestOut])

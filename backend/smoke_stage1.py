@@ -53,6 +53,7 @@ r = c.post(
         "adr_class": "3",
         "temp_mode": None,
         "urgency": "urgent",
+        "price_offer": 400000,
     },
 )
 check(r.status_code == 201, f"POST /api/requests -> {r.status_code}")
@@ -63,6 +64,10 @@ check(req["cargo_type"] == "oil_products", f"cargo_type = {req['cargo_type']}")
 check(req["volume_m3"] == 26.5, f"volume_m3 = {req['volume_m3']}")
 check(req["adr_class"] == "3", f"adr_class = {req['adr_class']}")
 check(req["urgency"] == "urgent", f"urgency = {req['urgency']}")
+# §2: расстояние посчиталось, цена сохранилась, тг/км вычислился
+check(req["distance_km"] and req["distance_km"] > 0, f"distance_km = {req['distance_km']}")
+check(req["price_offer"] == 400000, f"price_offer = {req['price_offer']}")
+check(req["price_per_km"] and req["price_per_km"] > 0, f"price_per_km = {req['price_per_km']}")
 
 print("2b) валидация: неверный класс ADR отклоняется")
 r_bad = c.post(
@@ -78,6 +83,21 @@ r_bad = c.post(
     },
 )
 check(r_bad.status_code == 422, f"POST с adr_class=99 -> {r_bad.status_code} (ожидался 422)")
+
+print("2c) §2: рекомендация цены и рыночная ставка")
+rp = c.post(
+    "/api/requests/recommend-price",
+    headers=auth(sh),
+    json={"cargo_type": "oil_products", "weight_t": 22, "origin": "Актау",
+          "destination": "Бейнеу", "adr_class": "3", "urgency": "urgent"},
+)
+check(rp.status_code == 200, f"POST recommend-price -> {rp.status_code}")
+rec = rp.json()
+check(rec["recommended"] > 0, f"рекомендованная цена = {rec['recommended']}")
+check(len(rec["factors"]) >= 2, f"факторов надбавки: {len(rec['factors'])} (ADR+срочность+наливной)")
+mr = c.get("/api/requests/market-rate", headers=auth(ca))
+check(mr.status_code == 200, f"GET market-rate -> {mr.status_code}")
+check(mr.json()["sample_size"] > 0, f"рыночная выборка: {mr.json()['sample_size']}")
 
 print("3) роль-гард: carrier не может создать заявку")
 r = c.post(

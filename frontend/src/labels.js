@@ -37,6 +37,12 @@ export const URGENCY_RU = {
   urgent: "Срочно",
 };
 
+// §2: цена в тенге с разделением разрядов («383 000 ₸»).
+export function fmtMoney(v) {
+  if (v == null) return "—";
+  return `${Math.round(v).toLocaleString("ru-RU")} ₸`;
+}
+
 const pad = (n) => String(n).padStart(2, "0");
 
 export function fmtDate(iso) {

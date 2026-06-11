@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 720
 
+    # §2: базовая ставка перевозки, тг за км·т (надбавки сверху — в pricing.py).
+    base_rate_tenge_per_km_t: float = 22.0
+
     # --- AI-сводка (раздел 4) ---
     # Провайдер: "gemini" | "claude". Без рабочего ключа сводка падает в fallback.
     ai_provider: str = "gemini"

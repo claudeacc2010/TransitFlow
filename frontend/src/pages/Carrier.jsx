@@ -4,24 +4,34 @@ import { QRCodeSVG } from "qrcode.react";
 
 import { api } from "../api";
 import Layout from "../components/Layout";
-import { CARGO_RU, STATUS_RU, fmtDate, fmtSlot } from "../labels";
+import { CARGO_RU, STATUS_RU, fmtDate, fmtMoney, fmtSlot } from "../labels";
+
+const SORTS = {
+  price: (a, b) => (b.price_offer || 0) - (a.price_offer || 0),
+  per_km: (a, b) => (b.price_per_km || 0) - (a.price_per_km || 0),
+  new: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+};
 
 export default function Carrier() {
   const [open, setOpen] = useState([]);
   const [mine, setMine] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
+  const [market, setMarket] = useState(null);
+  const [sort, setSort] = useState("price");
   const [error, setError] = useState("");
 
   async function load() {
     try {
-      const [o, m, cp] = await Promise.all([
+      const [o, m, cp, mr] = await Promise.all([
         api("/requests?status=open"),
         api("/requests?mine=1"),
         api("/checkpoints"),
+        api("/requests/market-rate"),
       ]);
       setOpen(o);
       setMine(m);
       setCheckpoints(cp);
+      setMarket(mr);
     } catch (err) {
       setError(err.message);
     }
@@ -30,6 +40,8 @@ export default function Carrier() {
   useEffect(() => {
     load();
   }, []);
+
+  const openSorted = [...open].sort(SORTS[sort]);
 
   // «Активные» у перевозчика — принятые и забронированные (не завершённые).
   const active = mine.filter((r) => r.status === "accepted" || r.status === "slot_booked");
@@ -44,11 +56,26 @@ export default function Carrier() {
             <h2>Лента заявок</h2>
             <span className="units">{open.length} открытых</span>
           </div>
+          <div className="board-bar">
+            {market?.avg_price_per_km != null && (
+              <span className="market-rate">
+                рынок: <b>{market.avg_price_per_km} ₸/км</b>
+              </span>
+            )}
+            <label className="sort-label">
+              сортировка
+              <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                <option value="price">по цене</option>
+                <option value="per_km">по ₸/км</option>
+                <option value="new">по новизне</option>
+              </select>
+            </label>
+          </div>
           {open.length === 0 ? (
             <div className="empty">Открытых заявок нет.</div>
           ) : (
             <div className="list">
-              {open.map((r) => (
+              {openSorted.map((r) => (
                 <OpenRow key={r.id} r={r} onAccepted={load} />
               ))}
             </div>
@@ -105,17 +132,33 @@ function OpenRow({ r, onAccepted }) {
         <span className="item-route">
           {r.origin} → {r.destination}
         </span>
-        <span className="badge badge-open">{STATUS_RU[r.status]}</span>
+        {r.price_offer ? (
+          <span className="price-tag">{fmtMoney(r.price_offer)}</span>
+        ) : (
+          <span className="badge badge-open">{STATUS_RU[r.status]}</span>
+        )}
       </div>
       <div className="item-meta">
         <span>
           {CARGO_RU[r.cargo_type]}, <b>{r.weight_t} т</b>
         </span>
+        {r.distance_km && (
+          <span>
+            {r.distance_km} км{r.price_per_km ? ` · ${r.price_per_km} ₸/км` : ""}
+          </span>
+        )}
         <span>
           на <b>{fmtDate(r.desired_date)}</b>
         </span>
         <span>{r.shipper.company || r.shipper.name}</span>
       </div>
+      {(r.urgency === "urgent" || r.adr_class || r.temp_mode) && (
+        <div className="item-badges">
+          {r.urgency === "urgent" && <span className="chip chip-urgent">Срочно</span>}
+          {r.adr_class && <span className="chip chip-adr">ADR {r.adr_class}</span>}
+          {r.temp_mode && <span className="chip chip-temp">❄ {r.temp_mode}</span>}
+        </div>
+      )}
       <form onSubmit={accept} className="row-2" style={{ marginTop: 10 }}>
         <input
           value={plate}

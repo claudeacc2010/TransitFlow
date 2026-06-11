@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api";
 import Layout from "../components/Layout";
-import { CARGO_OPTIONS, CARGO_RU, STATUS_RU, fmtDate, fmtSlot } from "../labels";
+import { CARGO_OPTIONS, CARGO_RU, STATUS_RU, fmtDate, fmtMoney, fmtSlot } from "../labels";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -18,6 +18,7 @@ const EMPTY = {
   adr_class: "3",
   temp_mode: "",
   urgency: "normal",
+  price_offer: "",
 };
 
 const ADR_CLASSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -34,6 +35,7 @@ function buildPayload(form) {
     adr_class: form.adr_on ? form.adr_class : null,
     temp_mode: form.temp_mode.trim() === "" ? null : form.temp_mode.trim(),
     urgency: form.urgency,
+    price_offer: form.price_offer === "" ? null : Number(form.price_offer),
   };
 }
 
@@ -42,6 +44,8 @@ export default function Shipper() {
   const [requests, setRequests] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [rec, setRec] = useState(null); // рекомендованная цена (§2)
+  const [recBusy, setRecBusy] = useState(false);
 
   async function load() {
     try {
@@ -59,6 +63,39 @@ export default function Shipper() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  // §2: запросить рекомендованную цену по текущим параметрам.
+  async function getRecommendation() {
+    if (!form.origin || !form.destination || !form.weight_t) {
+      setError("Для расчёта цены укажите маршрут и вес");
+      return;
+    }
+    setError("");
+    setRecBusy(true);
+    try {
+      const r = await api("/requests/recommend-price", {
+        method: "POST",
+        body: {
+          cargo_type: form.cargo_type,
+          weight_t: Number(form.weight_t),
+          origin: form.origin,
+          destination: form.destination,
+          adr_class: form.adr_on ? form.adr_class : null,
+          temp_mode: form.temp_mode.trim() || null,
+          urgency: form.urgency,
+        },
+      });
+      setRec(r);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRecBusy(false);
+    }
+  }
+
+  // Предупреждение, если своя цена занижена относительно рекомендованной >20%.
+  const priceLow =
+    rec && form.price_offer !== "" && Number(form.price_offer) < rec.recommended * 0.8;
+
   async function submit(e) {
     e.preventDefault();
     setError("");
@@ -69,6 +106,7 @@ export default function Shipper() {
         body: buildPayload(form),
       });
       setForm({ ...EMPTY, desired_date: todayISO() });
+      setRec(null);
       await load();
     } catch (err) {
       setError(err.message);
@@ -186,6 +224,52 @@ export default function Shipper() {
               required
             />
 
+            {/* §2: рекомендованная цена + своя цена */}
+            <div className="price-box">
+              <button
+                type="button"
+                className="btn-ghost btn-block"
+                onClick={getRecommendation}
+                disabled={recBusy}
+              >
+                {recBusy ? "Считаем…" : "Рассчитать рекомендованную цену"}
+              </button>
+              {rec && (
+                <div className="rec-price">
+                  <div className="rec-head">
+                    Рекомендуем <b>{fmtMoney(rec.recommended)}</b>
+                    <span className="rec-sub">
+                      {rec.distance_km} км · {rec.rate_per_km_t} ₸/км·т
+                    </span>
+                  </div>
+                  {rec.factors.length > 0 && (
+                    <div className="rec-factors">
+                      {rec.factors.map((f) => (
+                        <span key={f.label} className="chip chip-adr">
+                          {f.label} ×{f.multiplier}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <label>Ваша цена за перевозку, ₸</label>
+              <input
+                type="number"
+                min="1"
+                step="1000"
+                value={form.price_offer}
+                onChange={(e) => set("price_offer", e.target.value)}
+                placeholder={rec ? String(rec.recommended) : "напр. 380000"}
+              />
+              {priceLow && (
+                <div className="warn">
+                  Цена ниже рекомендованной на 20%+ — перевозчики могут не взять заказ.
+                </div>
+              )}
+            </div>
+
             <button className="btn-primary btn-block" disabled={busy} type="submit">
               Создать заявку
             </button>
@@ -234,6 +318,12 @@ function RequestRow({ r }) {
         <span>
           на <b>{fmtDate(r.desired_date)}</b>
         </span>
+        {r.price_offer && (
+          <span>
+            цена: <b>{fmtMoney(r.price_offer)}</b>
+            {r.price_per_km ? <> · {r.price_per_km} ₸/км</> : null}
+          </span>
+        )}
       </div>
       {(r.urgency === "urgent" || r.adr_class || r.temp_mode) && (
         <div className="item-badges">
