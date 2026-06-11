@@ -70,7 +70,7 @@ def register(
         link = f"{base}/api/auth/verify?token={user.verify_token}"
         try:
             send_verification_email(to=user.email, name=user.name, link=link)
-        except Exception:
+        except Exception as exc:
             # Письмо не ушло — откатываем регистрацию, чтобы человек не завис
             # «неподтверждённым» без письма и мог попробовать снова.
             logger.exception("SMTP: не удалось отправить письмо на %s", user.email)
@@ -78,7 +78,7 @@ def register(
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Не удалось отправить письмо подтверждения. Проверьте адрес и попробуйте ещё раз.",
+                detail=f"SMTP-ошибка [{type(exc).__name__}]: {exc}",
             )
         return RegisterResponse(
             verification_required=True,
