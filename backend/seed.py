@@ -45,6 +45,7 @@ from app.models import (
     RequestStatus,
     Slot,
     TrafficHistory,
+    Urgency,
     User,
     UserRole,
 )
@@ -64,6 +65,12 @@ AVG_TONNAGE = {
     CargoType.bulk: 26.0,
     CargoType.liquid: 28.0,
     CargoType.general: 15.0,
+    # Доработка v2 (§1) — для заявок (в traffic_history не используются).
+    CargoType.food: 16.0,
+    CargoType.grain: 25.0,
+    CargoType.oil_products: 28.0,
+    CargoType.construction: 24.0,
+    CargoType.chemicals: 22.0,
 }
 
 
@@ -108,7 +115,7 @@ COMPANY_PREFIX = [
 COMPANY_SUFFIX = ["Транс", "Логистик", "Лоджистикс", "Карго", "Экспедиция", "Сервис", "Трейд"]
 PERSON_NAMES = [
     "Айдар Нурланов", "Бекзат Сериков", "Гульнара Ахметова", "Данияр Калиев",
-    "Ержан Сапаров", "Жанна Оразбаева", "Кайрат Дюсенов", "লаура Бекова",
+    "Ержан Сапаров", "Жанна Оразбаева", "Кайрат Дюсенов", "Лаура Бекова",
     "Марат Жумабеков", "Нуржан Тулегенов", "Оразбек Кенжебаев", "Перизат Алиева",
     "Руслан Ибрагимов", "Самал Нургалиева", "Талгат Усенов", "Улан Сейтказы",
     "Фарида Конысбаева", "Хасен Молдагалиев", "Чингиз Абенов", "Шынар Досанова",
@@ -301,6 +308,34 @@ def seed_traffic(db: Session, checkpoints: dict[str, Checkpoint]) -> None:
           f"аномальные дни (idx)={anomaly_days}")
 
 
+# Доработка v2 (§1): реалистичные характеристики груза по типу.
+# (плотность т/м³ для объёма; класс ADR; температурный режим)
+_CARGO_DENSITY = {
+    CargoType.container: 0.35, CargoType.bulk: 1.4, CargoType.liquid: 0.85,
+    CargoType.general: 0.5, CargoType.food: 0.45, CargoType.grain: 0.75,
+    CargoType.oil_products: 0.83, CargoType.construction: 1.6, CargoType.chemicals: 1.1,
+}
+_CARGO_ADR = {  # типичный класс опасности (None = не опасный)
+    CargoType.oil_products: "3",   # ЛВЖ
+    CargoType.chemicals: "8",      # коррозийные
+}
+_CARGO_TEMP = {  # температурный режим (None = обычный)
+    CargoType.food: "+2..+6",
+}
+
+
+def _cargo_attrs(cargo: CargoType, weight: float) -> dict:
+    """Характеристики груза для заявки: объём, ADR, температура, срочность."""
+    density = _CARGO_DENSITY.get(cargo, 0.6)
+    volume = round(weight / density * random.uniform(0.9, 1.15), 1)
+    return {
+        "volume_m3": min(volume, 200.0),
+        "adr_class": _CARGO_ADR.get(cargo),
+        "temp_mode": _CARGO_TEMP.get(cargo),
+        "urgency": Urgency.urgent if random.random() < 0.2 else Urgency.normal,
+    }
+
+
 def seed_requests(db: Session, users: dict[str, list[User]], checkpoints: dict[str, Checkpoint]) -> None:
     existing = db.scalar(select(func.count()).select_from(CargoRequest))
     if existing:
@@ -347,10 +382,14 @@ def seed_requests(db: Session, users: dict[str, list[User]], checkpoints: dict[s
             desired = today + timedelta(days=random.randint(0, 6))
             created = datetime.now(timezone.utc) - timedelta(days=random.randint(0, 10))
 
+        attrs = _cargo_attrs(cargo, weight)
+        # Готовность к отправке — утро желаемой даты (раздел §1: дата готовности).
+        ready_at = datetime.combine(desired, time(hour=random.randint(6, 18)), tzinfo=timezone.utc)
         req = CargoRequest(
             shipper_id=shipper.id, cargo_type=cargo, weight_t=weight,
             origin=origin, destination=dest, desired_date=desired,
-            status=status, created_at=created,
+            ready_at=ready_at, status=status, created_at=created,
+            **attrs,
         )
         db.add(req)
         db.flush()

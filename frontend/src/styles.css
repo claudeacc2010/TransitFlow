@@ -256,6 +256,48 @@ button:disabled {
   border: 1px solid #e2574c55;
 }
 
+/* --- Чипы характеристик груза (§1) --- */
+.item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chip-urgent {
+  color: var(--load-high);
+  background: #e2574c1a;
+  border: 1px solid #e2574c55;
+}
+.chip-adr {
+  color: var(--accent);
+  background: #f5a6231a;
+  border: 1px solid #f5a62355;
+}
+.chip-temp {
+  color: #6aa6ff;
+  background: #6aa6ff1a;
+  border: 1px solid #6aa6ff55;
+}
+
+/* --- Чекбокс-строка в форме --- */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.check-row input {
+  width: auto;
+  margin: 0;
+}
+
 /* --- Загрузка слота (низкая/средняя/высокая) --- */
 .load-low {
   color: var(--load-low);

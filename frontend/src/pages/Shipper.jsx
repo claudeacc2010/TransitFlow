@@ -10,10 +10,32 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 const EMPTY = {
   cargo_type: "container",
   weight_t: "",
+  volume_m3: "",
   origin: "",
   destination: "",
   desired_date: todayISO(),
+  adr_on: false,
+  adr_class: "3",
+  temp_mode: "",
+  urgency: "normal",
 };
+
+const ADR_CLASSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+// Форма → тело запроса: пустые опции превращаем в null, числа парсим.
+function buildPayload(form) {
+  return {
+    cargo_type: form.cargo_type,
+    weight_t: Number(form.weight_t),
+    volume_m3: form.volume_m3 === "" ? null : Number(form.volume_m3),
+    origin: form.origin,
+    destination: form.destination,
+    desired_date: form.desired_date,
+    adr_class: form.adr_on ? form.adr_class : null,
+    temp_mode: form.temp_mode.trim() === "" ? null : form.temp_mode.trim(),
+    urgency: form.urgency,
+  };
+}
 
 export default function Shipper() {
   const [form, setForm] = useState(EMPTY);
@@ -44,7 +66,7 @@ export default function Shipper() {
     try {
       await api("/requests", {
         method: "POST",
-        body: { ...form, weight_t: Number(form.weight_t) },
+        body: buildPayload(form),
       });
       setForm({ ...EMPTY, desired_date: todayISO() });
       await load();
@@ -71,17 +93,33 @@ export default function Shipper() {
               ))}
             </select>
 
-            <label>Вес, т</label>
-            <input
-              type="number"
-              min="0.1"
-              max="100"
-              step="0.1"
-              value={form.weight_t}
-              onChange={(e) => set("weight_t", e.target.value)}
-              placeholder="18.5"
-              required
-            />
+            <div className="row-2">
+              <div>
+                <label>Вес, т</label>
+                <input
+                  type="number"
+                  min="0.1"
+                  max="100"
+                  step="0.1"
+                  value={form.weight_t}
+                  onChange={(e) => set("weight_t", e.target.value)}
+                  placeholder="18.5"
+                  required
+                />
+              </div>
+              <div>
+                <label>Объём, м³</label>
+                <input
+                  type="number"
+                  min="0.1"
+                  max="200"
+                  step="0.1"
+                  value={form.volume_m3}
+                  onChange={(e) => set("volume_m3", e.target.value)}
+                  placeholder="36"
+                />
+              </div>
+            </div>
 
             <div className="row-2">
               <div>
@@ -103,6 +141,42 @@ export default function Shipper() {
                 />
               </div>
             </div>
+
+            <div className="row-2">
+              <div>
+                <label>Срочность</label>
+                <select value={form.urgency} onChange={(e) => set("urgency", e.target.value)}>
+                  <option value="normal">Обычная</option>
+                  <option value="urgent">Срочно</option>
+                </select>
+              </div>
+              <div>
+                <label>Температурный режим</label>
+                <input
+                  value={form.temp_mode}
+                  onChange={(e) => set("temp_mode", e.target.value)}
+                  placeholder="напр. +2..+6 (пусто — обычный)"
+                />
+              </div>
+            </div>
+
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={form.adr_on}
+                onChange={(e) => set("adr_on", e.target.checked)}
+              />
+              Опасный груз (ADR)
+            </label>
+            {form.adr_on && (
+              <select value={form.adr_class} onChange={(e) => set("adr_class", e.target.value)}>
+                {ADR_CLASSES.map((c) => (
+                  <option key={c} value={c}>
+                    Класс {c}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <label>Желаемая дата</label>
             <input
@@ -155,16 +229,26 @@ function RequestRow({ r }) {
       <div className="item-meta">
         <span>
           {CARGO_RU[r.cargo_type]}, <b>{r.weight_t} т</b>
+          {r.volume_m3 ? <> · {r.volume_m3} м³</> : null}
         </span>
         <span>
           на <b>{fmtDate(r.desired_date)}</b>
         </span>
-        {a && (
+      </div>
+      {(r.urgency === "urgent" || r.adr_class || r.temp_mode) && (
+        <div className="item-badges">
+          {r.urgency === "urgent" && <span className="chip chip-urgent">Срочно</span>}
+          {r.adr_class && <span className="chip chip-adr">ADR {r.adr_class}</span>}
+          {r.temp_mode && <span className="chip chip-temp">❄ {r.temp_mode}</span>}
+        </div>
+      )}
+      {a && (
+        <div className="item-meta" style={{ marginTop: 6 }}>
           <span>
             перевозчик: <b>{a.carrier.company || a.carrier.name}</b> · {a.truck_plate}
           </span>
-        )}
-      </div>
+        </div>
+      )}
       {b && (
         <div className="item-meta" style={{ marginTop: 6 }}>
           <span>

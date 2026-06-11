@@ -13,6 +13,11 @@ export const CARGO_RU = {
   bulk: "Навалочный",
   liquid: "Наливной",
   general: "Генеральный",
+  food: "Продукты питания",
+  grain: "Зерно",
+  oil_products: "Нефтепродукты",
+  construction: "Стройматериалы",
+  chemicals: "Химикаты",
 };
 
 export const CARGO_OPTIONS = [
@@ -20,7 +25,17 @@ export const CARGO_OPTIONS = [
   ["bulk", "Навалочный"],
   ["liquid", "Наливной"],
   ["general", "Генеральный"],
+  ["food", "Продукты питания"],
+  ["grain", "Зерно"],
+  ["oil_products", "Нефтепродукты"],
+  ["construction", "Стройматериалы"],
+  ["chemicals", "Химикаты"],
 ];
+
+export const URGENCY_RU = {
+  normal: "Обычная",
+  urgent: "Срочно",
+};
 
 const pad = (n) => String(n).padStart(2, "0");
 

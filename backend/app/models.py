@@ -42,6 +42,17 @@ class CargoType(str, enum.Enum):
     bulk = "bulk"
     liquid = "liquid"
     general = "general"
+    # Доработка v2 (§1): реальные категории грузов Мангистау.
+    food = "food"               # продукты питания
+    grain = "grain"             # зерно
+    oil_products = "oil_products"  # нефтепродукты
+    construction = "construction"  # стройматериалы
+    chemicals = "chemicals"     # химикаты
+
+
+class Urgency(str, enum.Enum):
+    normal = "normal"
+    urgent = "urgent"
 
 
 class RequestStatus(str, enum.Enum):
@@ -120,6 +131,14 @@ class CargoRequest(Base):
     origin: Mapped[str] = mapped_column(Text, nullable=False)
     destination: Mapped[str] = mapped_column(Text, nullable=False)
     desired_date: Mapped[date] = mapped_column(nullable=False)
+    # Доработка v2 (§1): характеристики груза для настоящей логистики.
+    volume_m3: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    adr_class: Mapped[str | None] = mapped_column(String(8), nullable=True)  # null = не опасный
+    temp_mode: Mapped[str | None] = mapped_column(String(32), nullable=True)  # null = обычный
+    ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    urgency: Mapped[Urgency] = mapped_column(
+        _enum(Urgency, "urgency"), nullable=False, default=Urgency.normal
+    )
     status: Mapped[RequestStatus] = mapped_column(
         _enum(RequestStatus, "request_status"), nullable=False, default=RequestStatus.open, index=True
     )

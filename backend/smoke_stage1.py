@@ -39,22 +39,45 @@ sh = login("shipper@demo")
 ca = login("carrier@demo")
 check(bool(sh and ca), "оба токена получены")
 
-print("2) shipper создаёт заявку")
+print("2) shipper создаёт заявку (с характеристиками груза §1)")
 r = c.post(
     "/api/requests",
     headers=auth(sh),
     json={
-        "cargo_type": "container",
-        "weight_t": 18.5,
+        "cargo_type": "oil_products",
+        "weight_t": 22.0,
+        "volume_m3": 26.5,
         "origin": "Актау",
         "destination": "Бейнеу",
         "desired_date": "2026-06-12",
+        "adr_class": "3",
+        "temp_mode": None,
+        "urgency": "urgent",
     },
 )
 check(r.status_code == 201, f"POST /api/requests -> {r.status_code}")
 req = r.json()
 req_id = req["id"]
 check(req["status"] == "open", f"статус новой заявки = {req['status']} (ожидался open)")
+check(req["cargo_type"] == "oil_products", f"cargo_type = {req['cargo_type']}")
+check(req["volume_m3"] == 26.5, f"volume_m3 = {req['volume_m3']}")
+check(req["adr_class"] == "3", f"adr_class = {req['adr_class']}")
+check(req["urgency"] == "urgent", f"urgency = {req['urgency']}")
+
+print("2b) валидация: неверный класс ADR отклоняется")
+r_bad = c.post(
+    "/api/requests",
+    headers=auth(sh),
+    json={
+        "cargo_type": "chemicals",
+        "weight_t": 10.0,
+        "origin": "Актау",
+        "destination": "Курык",
+        "desired_date": "2026-06-12",
+        "adr_class": "99",
+    },
+)
+check(r_bad.status_code == 422, f"POST с adr_class=99 -> {r_bad.status_code} (ожидался 422)")
 
 print("3) роль-гард: carrier не может создать заявку")
 r = c.post(

@@ -42,6 +42,11 @@ def create_request(
         origin=payload.origin,
         destination=payload.destination,
         desired_date=payload.desired_date,
+        volume_m3=payload.volume_m3,
+        adr_class=payload.adr_class,
+        temp_mode=payload.temp_mode,
+        ready_at=payload.ready_at,
+        urgency=payload.urgency,
         status=RequestStatus.open,
     )
     db.add(req)

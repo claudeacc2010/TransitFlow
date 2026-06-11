@@ -5,13 +5,21 @@ from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_serializer,
+    field_validator,
+)
 
 from app.models import (
     BookingStatus,
     CargoType,
     CheckpointKind,
     RequestStatus,
+    Urgency,
     UserRole,
 )
 
@@ -193,6 +201,21 @@ class RequestCreate(BaseModel):
     origin: str = Field(min_length=1, max_length=200)
     destination: str = Field(min_length=1, max_length=200)
     desired_date: date
+    # Доработка v2 (§1): характеристики груза. Все опциональны, кроме срочности.
+    volume_m3: float | None = Field(default=None, gt=0, le=200)
+    adr_class: str | None = Field(default=None, max_length=8)
+    temp_mode: str | None = Field(default=None, max_length=32)
+    ready_at: datetime | None = None
+    urgency: Urgency = Urgency.normal
+
+    @field_validator("adr_class")
+    @classmethod
+    def _check_adr(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if v not in {"1", "2", "3", "4", "5", "6", "7", "8", "9"}:
+            raise ValueError("Класс ADR должен быть числом 1–9")
+        return v
 
 
 class AcceptRequestIn(BaseModel):
@@ -209,6 +232,11 @@ class RequestOut(BaseModel):
     origin: str
     destination: str
     desired_date: date
+    volume_m3: float | None = None
+    adr_class: str | None = None
+    temp_mode: str | None = None
+    ready_at: datetime | None = None
+    urgency: Urgency
     status: RequestStatus
     created_at: datetime
     assignment: AssignmentOut | None = None
