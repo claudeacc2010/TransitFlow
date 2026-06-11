@@ -269,6 +269,7 @@ def report_pdf(
     # Параметры days/by передаём явно: при прямом вызове (не через HTTP)
     # их значения по умолчанию — объекты Query(...), а не числа.
     ov = overview(db=db, _user=user)
+    ts = timeseries(db=db, _user=user, checkpoint_id=None, days=90)
     wd = weekday_load(db=db, _user=user, days=90)
     cargo_items = breakdown(db=db, _user=user, by="cargo_type", days=90)
     bottlenecks = [(name, round(w, 1)) for name, w in _bottlenecks(db)]
@@ -282,6 +283,7 @@ def report_pdf(
             "active_requests": ov.active_requests,
             "avg_load_pct": ov.avg_load_pct,
         },
+        timeseries=[(p.date, p.trucks) for p in ts],
         bottlenecks=bottlenecks,
         weekday=[(i.label, i.trucks) for i in wd],
         cargo=[(i.label, i.trucks) for i in cargo_items],

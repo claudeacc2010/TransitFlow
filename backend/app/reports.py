@@ -12,6 +12,8 @@ import io
 from datetime import datetime
 from pathlib import Path
 
+from reportlab.graphics.charts.lineplots import LinePlot
+from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -98,10 +100,62 @@ def _table(data: list[list[str]], col_widths: list[float], *, highlight_row: int
     return t
 
 
+def _fmt_date(value) -> str:
+    """date/str 'YYYY-MM-DD' → 'дд.мм'."""
+    try:
+        return value.strftime("%d.%m")
+    except AttributeError:
+        parts = str(value).split("-")
+        return f"{parts[2]}.{parts[1]}" if len(parts) == 3 else str(value)
+
+
+def _traffic_chart(points: list[tuple], width: float = 470, height: float = 175) -> Drawing:
+    """Линейный график «машин в сутки» по дате. points: list[(date, trucks)]."""
+    d = Drawing(width, height)
+    n = len(points)
+    if n == 0:
+        return d
+
+    lp = LinePlot()
+    lp.x = 44
+    lp.y = 26
+    lp.width = width - 60
+    lp.height = height - 46
+    lp.data = [[(i, t) for i, (_, t) in enumerate(points)]]
+    lp.joinedLines = 1
+    lp.lines[0].strokeColor = _ACCENT
+    lp.lines[0].strokeWidth = 1.4
+
+    # Ось X: ~7 равномерных подписей дат (иначе 90 меток сольются).
+    step = max(1, (n - 1) // 7)
+    ticks = list(range(0, n, step))
+    if ticks[-1] != n - 1:
+        ticks.append(n - 1)
+    dates = [p[0] for p in points]
+    lp.xValueAxis.valueMin = 0
+    lp.xValueAxis.valueMax = n - 1
+    lp.xValueAxis.valueSteps = ticks
+    lp.xValueAxis.labelTextFormat = lambda v: _fmt_date(dates[max(0, min(n - 1, int(round(v))))])
+    lp.xValueAxis.labels.fontName = _FONT
+    lp.xValueAxis.labels.fontSize = 7
+    lp.xValueAxis.strokeColor = _GRID
+
+    lp.yValueAxis.valueMin = 0
+    lp.yValueAxis.labels.fontName = _FONT
+    lp.yValueAxis.labels.fontSize = 7
+    lp.yValueAxis.strokeColor = _GRID
+    lp.yValueAxis.visibleGrid = 1
+    lp.yValueAxis.gridStrokeColor = colors.HexColor("#e6e9ef")
+
+    d.add(lp)
+    return d
+
+
 def build_analytics_pdf(
     *,
     generated_at: datetime,
     overview: dict,
+    timeseries: list[tuple],
     bottlenecks: list[tuple[str, float]],
     weekday: list[tuple[str, int]],
     cargo: list[tuple[str, int]],
@@ -137,6 +191,16 @@ def build_analytics_pdf(
         ["Средняя загрузка узлов", f"{overview['avg_load_pct']} %"],
     ]
     story.append(_table(kpi, [95 * mm, 55 * mm]))
+
+    # --- Динамика потока ---
+    story.append(Paragraph("Динамика потока, машин в сутки", st["h2"]))
+    if timeseries:
+        days = len(timeseries)
+        story.append(Paragraph(f"Период наблюдения: {days} дн.", st["subtitle"]))
+        story.append(Spacer(1, 4))
+        story.append(_traffic_chart(timeseries))
+    else:
+        story.append(Paragraph("Нет данных.", st["body"]))
 
     # --- Узкие места ---
     story.append(Paragraph("Узкие места: очереди на узлах", st["h2"]))
