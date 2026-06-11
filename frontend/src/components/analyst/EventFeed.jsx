@@ -7,6 +7,7 @@ const KIND_CLASS = {
   request: "ev-request",
   accept: "ev-accept",
   booking: "ev-booking",
+  shipment: "ev-shipment",
 };
 
 const POLL_MS = 5000;

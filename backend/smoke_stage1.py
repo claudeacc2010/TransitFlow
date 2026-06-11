@@ -174,6 +174,21 @@ check(r.status_code == 200 and "TransitFlow" in r.text and "777 ABC 12" in r.tex
 r = c.get("/pass/not-a-uuid")
 check(r.status_code == 404, f"битый qr -> {r.status_code} (ожидался 404)")
 
+print("13) §3: статусы перевозки — переход вперёд, запрет назад, delivered->done")
+r = c.get("/api/requests", headers=auth(sh), params={"mine": 1})
+asg0 = {x["id"]: x for x in r.json()}[req_id]["assignment"]
+check(asg0["shipment_status"] == "confirmed", f"стартовый статус = {asg0['shipment_status']}")
+r = c.patch(f"/api/assignments/{asg_id}/status", headers=auth(ca), json={"status": "in_transit"})
+check(r.status_code == 200 and r.json()["shipment_status"] == "in_transit", "переход confirmed -> in_transit")
+r = c.patch(f"/api/assignments/{asg_id}/status", headers=auth(ca), json={"status": "confirmed"})
+check(r.status_code == 409, f"переход назад -> {r.status_code} (ожидался 409)")
+r = c.patch(f"/api/assignments/{asg_id}/status", headers=auth(sh), json={"status": "at_port"})
+check(r.status_code == 403, f"shipper меняет статус -> {r.status_code} (ожидался 403)")
+r = c.patch(f"/api/assignments/{asg_id}/status", headers=auth(ca), json={"status": "delivered"})
+check(r.status_code == 200, f"переход -> delivered = {r.status_code}")
+r = c.get("/api/requests", headers=auth(sh), params={"mine": 1})
+check({x["id"]: x for x in r.json()}[req_id]["status"] == "done", "delivered закрыл заявку (status=done)")
+
 print()
 print("ИТОГ:", "ВСЕ ПРОВЕРКИ ЗЕЛЁНЫЕ" if ok else "ЕСТЬ ПАДЕНИЯ")
 sys.exit(0 if ok else 1)

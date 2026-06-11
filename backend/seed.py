@@ -44,6 +44,7 @@ from app.models import (
     CheckpointKind,
     Direction,
     RequestStatus,
+    ShipmentStatus,
     Slot,
     TrafficHistory,
     Urgency,
@@ -410,9 +411,22 @@ def seed_requests(db: Session, users: dict[str, list[User]], checkpoints: dict[s
         # Назначение перевозчику для accepted/slot_booked/done.
         if status in (RequestStatus.accepted, RequestStatus.slot_booked, RequestStatus.done):
             carrier = random.choice(carriers)
+            accepted_at = created + timedelta(hours=random.randint(1, 24))
+            # §3: транспортный статус по стадии заявки.
+            if status is RequestStatus.done:
+                ship = ShipmentStatus.delivered
+            elif status is RequestStatus.slot_booked:
+                ship = random.choice([
+                    ShipmentStatus.in_transit, ShipmentStatus.at_checkpoint, ShipmentStatus.at_port,
+                ])
+            else:  # accepted
+                ship = random.choice([
+                    ShipmentStatus.confirmed, ShipmentStatus.awaiting_loading, ShipmentStatus.in_transit,
+                ])
             asg = Assignment(
                 request_id=req.id, carrier_id=carrier.id, truck_plate=_plate(),
-                accepted_at=created + timedelta(hours=random.randint(1, 24)),
+                accepted_at=accepted_at, shipment_status=ship,
+                status_updated_at=accepted_at + timedelta(hours=random.randint(0, 30)),
             )
             db.add(asg)
             db.flush()

@@ -3,7 +3,16 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api";
 import Layout from "../components/Layout";
-import { CARGO_OPTIONS, CARGO_RU, STATUS_RU, fmtDate, fmtMoney, fmtSlot } from "../labels";
+import {
+  CARGO_OPTIONS,
+  CARGO_RU,
+  SHIPMENT_STEPS,
+  STATUS_RU,
+  fmtDate,
+  fmtMoney,
+  fmtSlot,
+  shipmentStepIndex,
+} from "../labels";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -299,6 +308,23 @@ export default function Shipper() {
   );
 }
 
+// §3: горизонтальный степпер жизненного цикла груза.
+function Stepper({ current }) {
+  return (
+    <div className="stepper">
+      {SHIPMENT_STEPS.map((label, i) => {
+        const state = i < current ? "done" : i === current ? "active" : "todo";
+        return (
+          <div key={label} className={`step step-${state}`}>
+            <span className="step-dot" />
+            <span className="step-label">{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function RequestRow({ r }) {
   const a = r.assignment;
   const b = a?.booking;
@@ -339,6 +365,7 @@ function RequestRow({ r }) {
           </span>
         </div>
       )}
+      {r.status !== "cancelled" && <Stepper current={shipmentStepIndex(r)} />}
       {b && (
         <div className="item-meta" style={{ marginTop: 6 }}>
           <span>

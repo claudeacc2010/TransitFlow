@@ -4,7 +4,15 @@ import { QRCodeSVG } from "qrcode.react";
 
 import { api } from "../api";
 import Layout from "../components/Layout";
-import { CARGO_RU, STATUS_RU, fmtDate, fmtMoney, fmtSlot } from "../labels";
+import {
+  CARGO_RU,
+  SHIPMENT_RU,
+  STATUS_RU,
+  fmtDate,
+  fmtMoney,
+  fmtSlot,
+  nextShipmentStatus,
+} from "../labels";
 
 const SORTS = {
   price: (a, b) => (b.price_offer || 0) - (a.price_offer || 0),
@@ -195,11 +203,52 @@ function ActiveRow({ r, checkpoints, onBooked }) {
         </span>
       </div>
 
+      <ShipmentControl assignment={r.assignment} onChanged={onBooked} />
+
       {booking ? (
         <Pass booking={booking} />
       ) : (
         <BookingForm assignmentId={r.assignment.id} checkpoints={checkpoints} onBooked={onBooked} />
       )}
+    </div>
+  );
+}
+
+// --- §3: текущий статус перевозки + кнопка перехода на следующий этап ---
+function ShipmentControl({ assignment, onChanged }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const next = nextShipmentStatus(assignment.shipment_status);
+
+  async function advance() {
+    setErr("");
+    setBusy(true);
+    try {
+      await api(`/assignments/${assignment.id}/status`, {
+        method: "PATCH",
+        body: { status: next },
+      });
+      onChanged();
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="shipment-ctl">
+      <span className="shipment-now">
+        статус: <b>{SHIPMENT_RU[assignment.shipment_status]}</b>
+      </span>
+      {next ? (
+        <button className="btn-ghost btn-sm" disabled={busy} onClick={advance}>
+          → {SHIPMENT_RU[next]}
+        </button>
+      ) : (
+        <span className="chip chip-temp">Доставлено</span>
+      )}
+      {err && <div className="error">{err}</div>}
     </div>
   );
 }

@@ -76,6 +76,27 @@ class Direction(str, enum.Enum):
     transit = "transit"
 
 
+class ShipmentStatus(str, enum.Enum):
+    """§3: жизненный цикл груза после принятия перевозчиком (по порядку)."""
+    confirmed = "confirmed"               # подтверждено перевозчиком
+    awaiting_loading = "awaiting_loading"  # ожидает погрузки
+    in_transit = "in_transit"             # в пути
+    at_checkpoint = "at_checkpoint"       # на пункте пропуска
+    at_port = "at_port"                   # в порту
+    delivered = "delivered"               # доставлено
+
+
+# Порядок этапов перевозки — для валидации переходов «только вперёд».
+SHIPMENT_ORDER: list[ShipmentStatus] = [
+    ShipmentStatus.confirmed,
+    ShipmentStatus.awaiting_loading,
+    ShipmentStatus.in_transit,
+    ShipmentStatus.at_checkpoint,
+    ShipmentStatus.at_port,
+    ShipmentStatus.delivered,
+]
+
+
 # Общие helper'ы для Enum-колонок: храним value ("shipper"), а не имя.
 def _enum(enum_cls: type[enum.Enum], name: str) -> SAEnum:
     return SAEnum(
@@ -163,6 +184,13 @@ class Assignment(Base):
     carrier_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     truck_plate: Mapped[str] = mapped_column(Text, nullable=False)
     accepted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    # §3: транспортный статус груза + время последнего перехода.
+    shipment_status: Mapped[ShipmentStatus] = mapped_column(
+        _enum(ShipmentStatus, "shipment_status"), nullable=False, default=ShipmentStatus.confirmed
+    )
+    status_updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 

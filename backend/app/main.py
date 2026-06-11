@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import init_db
 from app.routers import analytics as analytics_router
+from app.routers import assignments as assignments_router
 from app.routers import auth as auth_router
 from app.routers import bookings as bookings_router
 from app.routers import checkpoints as checkpoints_router
@@ -43,6 +44,7 @@ app.add_middleware(
 
 app.include_router(auth_router.router)
 app.include_router(requests_router.router)
+app.include_router(assignments_router.router)
 app.include_router(checkpoints_router.router)
 app.include_router(slots_router.router)
 app.include_router(bookings_router.router)

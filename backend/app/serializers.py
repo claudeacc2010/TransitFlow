@@ -35,6 +35,8 @@ def assignment_out(asg: Assignment) -> AssignmentOut:
         carrier=UserBrief.model_validate(asg.carrier),
         truck_plate=asg.truck_plate,
         accepted_at=asg.accepted_at,
+        shipment_status=asg.shipment_status,
+        status_updated_at=asg.status_updated_at,
         booking=booking_brief(asg.booking) if asg.booking else None,
     )
 

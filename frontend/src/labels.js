@@ -37,6 +37,43 @@ export const URGENCY_RU = {
   urgent: "Срочно",
 };
 
+// §3: подписи транспортных статусов и следующий шаг по цепочке.
+export const SHIPMENT_RU = {
+  confirmed: "Подтверждено",
+  awaiting_loading: "Ожидает погрузки",
+  in_transit: "В пути",
+  at_checkpoint: "На пункте пропуска",
+  at_port: "В порту",
+  delivered: "Доставлено",
+};
+
+export const SHIPMENT_ORDER = [
+  "confirmed",
+  "awaiting_loading",
+  "in_transit",
+  "at_checkpoint",
+  "at_port",
+  "delivered",
+];
+
+export function nextShipmentStatus(current) {
+  const i = SHIPMENT_ORDER.indexOf(current);
+  return i >= 0 && i < SHIPMENT_ORDER.length - 1 ? SHIPMENT_ORDER[i + 1] : null;
+}
+
+// Полный жизненный цикл груза для степпера у отправителя.
+export const SHIPMENT_STEPS = [
+  "Создана",
+  "Ищется перевозчик",
+  ...SHIPMENT_ORDER.map((s) => SHIPMENT_RU[s]),
+];
+
+// Индекс текущего шага степпера по заявке (учитывает наличие назначения).
+export function shipmentStepIndex(r) {
+  if (!r.assignment) return 1; // ищется перевозчик
+  return 2 + SHIPMENT_ORDER.indexOf(r.assignment.shipment_status);
+}
+
 // §2: цена в тенге с разделением разрядов («383 000 ₸»).
 export function fmtMoney(v) {
   if (v == null) return "—";

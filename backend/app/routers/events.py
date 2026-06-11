@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.auth import require_role
 from app.db import get_db
-from app.models import Assignment, Booking, CargoRequest, User, UserRole
+from app.models import Assignment, Booking, CargoRequest, ShipmentStatus, User, UserRole
 from app.schemas import EventOut
 
 router = APIRouter(prefix="/api", tags=["events"])
@@ -23,6 +23,20 @@ _CARGO_RU = {
     "bulk": "навалочный",
     "liquid": "наливной",
     "general": "генеральный",
+    "food": "продукты",
+    "grain": "зерно",
+    "oil_products": "нефтепродукты",
+    "construction": "стройматериалы",
+    "chemicals": "химикаты",
+}
+
+# §3: подписи этапов перевозки для ленты (показываем движение, не подтверждение).
+_SHIPMENT_RU = {
+    ShipmentStatus.awaiting_loading: "ожидает погрузки",
+    ShipmentStatus.in_transit: "в пути",
+    ShipmentStatus.at_checkpoint: "на пункте пропуска",
+    ShipmentStatus.at_port: "в порту",
+    ShipmentStatus.delivered: "доставлено",
 }
 
 
@@ -71,6 +85,24 @@ def list_events(
                 title="Заявка принята",
                 detail=f"{a.carrier.name} · {a.truck_plate}: "
                 f"{a.request.origin} → {a.request.destination}",
+            )
+        )
+
+    # §3: переходы статуса перевозки (движение груза по этапам).
+    moves = db.scalars(
+        select(Assignment)
+        .options(joinedload(Assignment.request))
+        .where(Assignment.shipment_status.in_(list(_SHIPMENT_RU.keys())))
+        .order_by(Assignment.status_updated_at.desc())
+        .limit(limit)
+    )
+    for a in moves:
+        events.append(
+            EventOut(
+                kind="shipment",
+                ts=a.status_updated_at,
+                title=f"Груз: {_SHIPMENT_RU[a.shipment_status]}",
+                detail=f"{a.truck_plate}: {a.request.origin} → {a.request.destination}",
             )
         )
 

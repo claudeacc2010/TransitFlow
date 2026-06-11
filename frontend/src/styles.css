@@ -376,6 +376,69 @@ button:disabled {
   font-size: 13px;
 }
 
+/* --- §3: степпер жизненного цикла груза --- */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 2px;
+  margin-top: 10px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--muted);
+  position: relative;
+  padding-right: 6px;
+}
+.step:not(:last-child)::after {
+  content: "›";
+  margin-left: 2px;
+  color: var(--border);
+}
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex: none;
+}
+.step-done .step-dot {
+  background: var(--load-low);
+}
+.step-active .step-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px #f5a62333;
+}
+.step-active .step-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+.step-done .step-label {
+  color: var(--text);
+}
+
+/* --- §3: управление статусом у перевозчика --- */
+.shipment-ctl {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.shipment-now {
+  color: var(--muted);
+}
+.shipment-now b {
+  color: var(--text);
+}
+
 /* --- Загрузка слота (низкая/средняя/высокая) --- */
 .load-low {
   color: var(--load-low);
@@ -596,6 +659,7 @@ button:disabled {
 .feed-dot.ev-request { background: var(--accent); }
 .feed-dot.ev-accept { background: #6aa6ff; }
 .feed-dot.ev-booking { background: var(--load-low); }
+.feed-dot.ev-shipment { background: #b48be0; }
 .feed-body {
   flex: 1;
   min-width: 0;

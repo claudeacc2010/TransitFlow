@@ -19,6 +19,7 @@ from app.models import (
     CargoType,
     CheckpointKind,
     RequestStatus,
+    ShipmentStatus,
     Urgency,
     UserRole,
 )
@@ -196,7 +197,13 @@ class AssignmentOut(BaseModel):
     carrier: UserBrief
     truck_plate: str
     accepted_at: datetime
+    shipment_status: ShipmentStatus
+    status_updated_at: datetime
     booking: BookingBrief | None = None
+
+
+class ShipmentStatusUpdate(BaseModel):
+    status: ShipmentStatus
 
 
 class RequestCreate(BaseModel):
