@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api";
+import CargoRules from "../components/CargoRules";
 import Layout from "../components/Layout";
 import {
   CARGO_OPTIONS,
@@ -365,6 +366,7 @@ function RequestRow({ r }) {
           </span>
         </div>
       )}
+      <CargoRules r={r} />
       {r.status !== "cancelled" && <Stepper current={shipmentStepIndex(r)} />}
       {b && (
         <div className="item-meta" style={{ marginTop: 6 }}>

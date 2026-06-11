@@ -252,6 +252,9 @@ class RequestOut(BaseModel):
     urgency: Urgency
     distance_km: float | None = None
     price_offer: float | None = None
+    # §6: подсказки логистики (документы и несовместимые грузы).
+    required_docs: list[str] = []
+    incompatible_with: list[str] = []
     status: RequestStatus
     created_at: datetime
     assignment: AssignmentOut | None = None

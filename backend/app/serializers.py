@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+from app.cargo_rules import incompatible_with, required_docs
 from app.models import Assignment, Booking, CargoRequest
 from app.schemas import (
     AssignmentOut,
@@ -57,6 +58,8 @@ def request_out(req: CargoRequest) -> RequestOut:
         urgency=req.urgency,
         distance_km=float(req.distance_km) if req.distance_km is not None else None,
         price_offer=float(req.price_offer) if req.price_offer is not None else None,
+        required_docs=required_docs(req.cargo_type, req.adr_class, req.temp_mode),
+        incompatible_with=incompatible_with(req.cargo_type),
         status=req.status,
         created_at=req.created_at,
         assignment=assignment_out(req.assignment) if req.assignment else None,

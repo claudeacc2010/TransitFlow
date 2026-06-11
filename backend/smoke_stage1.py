@@ -68,6 +68,11 @@ check(req["urgency"] == "urgent", f"urgency = {req['urgency']}")
 check(req["distance_km"] and req["distance_km"] > 0, f"distance_km = {req['distance_km']}")
 check(req["price_offer"] == 400000, f"price_offer = {req['price_offer']}")
 check(req["price_per_km"] and req["price_per_km"] > 0, f"price_per_km = {req['price_per_km']}")
+# §6: для нефтепродуктов с ADR нужен CMR+ADR и есть несовместимость
+check("CMR" in req["required_docs"] and any("ADR" in d for d in req["required_docs"]),
+      f"документы: {req['required_docs']}")
+check("продукты питания" in req["incompatible_with"],
+      f"несовместимо с: {req['incompatible_with']}")
 
 print("2b) валидация: неверный класс ADR отклоняется")
 r_bad = c.post(

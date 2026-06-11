@@ -439,6 +439,22 @@ button:disabled {
   color: var(--text);
 }
 
+/* --- §6: документы и несовместимость --- */
+.cargo-rules {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.docs-line {
+  color: var(--muted);
+}
+.docs-ico {
+  opacity: 0.8;
+}
+.incompat-line {
+  margin-top: 4px;
+  color: var(--load-high);
+}
+
 /* --- Загрузка слота (низкая/средняя/высокая) --- */
 .load-low {
   color: var(--load-low);

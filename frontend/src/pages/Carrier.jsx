@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { api } from "../api";
+import CargoRules from "../components/CargoRules";
 import Layout from "../components/Layout";
 import {
   CARGO_RU,
@@ -167,6 +168,7 @@ function OpenRow({ r, onAccepted }) {
           {r.temp_mode && <span className="chip chip-temp">❄ {r.temp_mode}</span>}
         </div>
       )}
+      <CargoRules r={r} />
       <form onSubmit={accept} className="row-2" style={{ marginTop: 10 }}>
         <input
           value={plate}
